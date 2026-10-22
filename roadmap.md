@@ -1,0 +1,11 @@
+- [x] Auditar todas as consultas, tabelas e RLS por vendedor
+- [x] Criar função global de vendedores autorizados no banco/app
+- [x] Migrar entidades compartilhadas para propriedade relacional e RLS
+- [x] Aplicar escopo backend nas entidades operacionais e financeiras críticas
+- [x] Validar chamada real e sessão Raiane; integridade e acesso administrativo confirmados pelas políticas e contagens do banco
+- [x] Relatar contagens, nulos, causa e integridade histórica
+- [x] Corrigir a detecção estrutural e o diagnóstico das abas de vendas e bonificações
+- [x] Separar a leitura explícita de Faturamento e Bonificações
+- [x] Unificar lote mensal e bonificações em uma gravação transacional
+- [ ] Validar a importação e persistência com o arquivo real Total Vendas Agosto - 2026.xlsx (bloqueado: arquivo não enviado nesta sessão)
+- [x] Reconciliar o relatório oficial do SIGE de 01/09 a 23/09/2026 e validar Juliano em R$ 225.507,62

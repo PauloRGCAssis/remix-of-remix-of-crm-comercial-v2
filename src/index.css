@@ -1,0 +1,224 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Playfair+Display:wght@700;800;900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 40 33% 98%;
+    --foreground: 25 30% 12%;
+
+    --card: 40 30% 99%;
+    --card-foreground: 25 30% 12%;
+
+    --popover: 40 30% 99%;
+    --popover-foreground: 25 30% 12%;
+
+    --primary: 32 90% 50%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 35 30% 93%;
+    --secondary-foreground: 25 30% 18%;
+
+    --muted: 35 20% 94%;
+    --muted-foreground: 25 10% 46%;
+
+    --accent: 25 60% 45%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 142 60% 40%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 25 30% 12%;
+
+    --info: 210 70% 50%;
+    --info-foreground: 0 0% 100%;
+
+    --border: 35 20% 88%;
+    --input: 35 20% 88%;
+    --ring: 32 90% 50%;
+
+    --radius: 0.75rem;
+
+    --sidebar-background: 25 28% 14%;
+    --sidebar-foreground: 35 20% 85%;
+    --sidebar-primary: 32 90% 55%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 25 25% 20%;
+    --sidebar-accent-foreground: 35 20% 90%;
+    --sidebar-border: 25 20% 22%;
+    --sidebar-ring: 32 90% 55%;
+
+    --chart-1: 32 90% 50%;
+    --chart-2: 142 60% 40%;
+    --chart-3: 210 70% 50%;
+    --chart-4: 0 72% 51%;
+    --chart-5: 280 60% 50%;
+
+    --font-heading: 'Playfair Display', serif;
+    --font-body: 'DM Sans', sans-serif;
+  }
+
+  .dark {
+    --background: 25 28% 8%;
+    --foreground: 35 20% 92%;
+
+    --card: 25 25% 12%;
+    --card-foreground: 35 20% 92%;
+
+    --popover: 25 25% 12%;
+    --popover-foreground: 35 20% 92%;
+
+    --primary: 32 90% 55%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 25 20% 18%;
+    --secondary-foreground: 35 20% 90%;
+
+    --muted: 25 15% 18%;
+    --muted-foreground: 35 10% 55%;
+
+    --accent: 32 70% 50%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 62% 45%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 142 55% 45%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 38 85% 55%;
+    --warning-foreground: 25 30% 12%;
+
+    --info: 210 65% 55%;
+    --info-foreground: 0 0% 100%;
+
+    --border: 25 15% 22%;
+    --input: 25 15% 22%;
+    --ring: 32 90% 55%;
+
+    --sidebar-background: 25 30% 8%;
+    --sidebar-foreground: 35 20% 85%;
+    --sidebar-primary: 32 90% 55%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 25 25% 15%;
+    --sidebar-accent-foreground: 35 20% 90%;
+    --sidebar-border: 25 20% 15%;
+    --sidebar-ring: 32 90% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-body);
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading);
+  }
+}
+
+@layer components {
+  /*
+   * Padrão global "planilha": cabeçalho congelado no topo e primeira coluna
+   * identificadora congelada à esquerda, com o cruzamento das duas sempre
+   * visível. Aplicado automaticamente pelo componente <Table /> e disponível
+   * como classe .sheet-table para tabelas nativas.
+   */
+  .sheet-table > table > thead > tr > th,
+  .sheet-table > table > thead > tr > td {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background-color: hsl(var(--background));
+    box-shadow: inset 0 -1px 0 0 hsl(var(--border));
+  }
+
+  .sheet-table > table > tbody > tr > *:first-child,
+  .sheet-table > table > tfoot > tr > *:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 10;
+    background-color: hsl(var(--background));
+    box-shadow: inset -1px 0 0 0 hsl(var(--border)), 2px 0 4px -3px hsl(25 30% 12% / 0.35);
+  }
+
+  .sheet-table > table > thead > tr > *:first-child {
+    left: 0;
+    z-index: 30;
+    box-shadow: inset 0 -1px 0 0 hsl(var(--border)), inset -1px 0 0 0 hsl(var(--border)),
+      2px 0 4px -3px hsl(25 30% 12% / 0.35);
+  }
+
+  /* Opt-out pontual para tabelas que já tratam o congelamento manualmente. */
+  .sheet-table-off > table > thead > tr > th,
+  .sheet-table-off > table > thead > tr > td,
+  .sheet-table-off > table > tbody > tr > *:first-child,
+  .sheet-table-off > table > tfoot > tr > *:first-child {
+    position: static;
+    box-shadow: none;
+  }
+}
+
+@layer utilities {
+
+  .gradient-brand {
+    background: linear-gradient(135deg, hsl(32 90% 50%), hsl(25 60% 45%));
+  }
+  
+  .gradient-card {
+    background: linear-gradient(145deg, hsl(40 30% 99%), hsl(35 25% 96%));
+  }
+
+  .text-gradient-brand {
+    background: linear-gradient(135deg, hsl(32 90% 50%), hsl(25 60% 45%));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .shadow-brand {
+    box-shadow: 0 4px 20px -4px hsl(32 90% 50% / 0.25);
+  }
+
+  .shadow-card {
+    box-shadow: 0 1px 3px 0 hsl(25 30% 12% / 0.06), 0 1px 2px -1px hsl(25 30% 12% / 0.06);
+  }
+
+  .shadow-card-hover {
+    box-shadow: 0 10px 25px -5px hsl(25 30% 12% / 0.1), 0 8px 10px -6px hsl(25 30% 12% / 0.08);
+  }
+
+  /*
+   * Inteligência Comercial — tabelas legíveis.
+   * Regra: cabeçalhos sempre horizontais, valores/percentuais/datas em uma linha.
+   * Quebra de texto SOMENTE em células opt-in (className inclui "whitespace-normal"
+   * ou "break-words"), tipicamente Cliente/Produto/Vendedor.
+   */
+  .ranking-readable th {
+    white-space: nowrap;
+  }
+  .ranking-readable td {
+    white-space: nowrap;
+    word-break: normal;
+    overflow-wrap: normal;
+  }
+  .ranking-readable td.whitespace-normal,
+  .ranking-readable td.break-words,
+  .ranking-readable th.whitespace-normal,
+  .ranking-readable th.break-words {
+    white-space: normal;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+  }
+}
