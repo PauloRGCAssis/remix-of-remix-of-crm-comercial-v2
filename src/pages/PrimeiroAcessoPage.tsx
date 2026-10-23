@@ -24,6 +24,8 @@ export default function PrimeiroAcessoPage() {
 
   async function sendCode() {
     setBusy(true);
+    setCodeSent(true);
+
     try {
       const { error } = await supabase.auth.signInWithOtp({
         email: email.trim().toLowerCase(),
