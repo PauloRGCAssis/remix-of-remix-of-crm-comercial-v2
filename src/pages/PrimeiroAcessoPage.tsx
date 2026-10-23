@@ -55,7 +55,7 @@ export default function PrimeiroAcessoPage() {
             apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ email: normalizedEmail, password, token }),
+          body: JSON.stringify({ email: normalizedEmail, password, token: cleanToken }),
         },
       );
     } catch {
@@ -110,7 +110,7 @@ export default function PrimeiroAcessoPage() {
           <div className='space-y-2 mb-3'>
             <Button type='button' disabled={busy || !email.trim()} onClick={sendCode}>Enviar código por e-mail</Button>
             <Label htmlFor='pa-token'>Código recebido por e-mail</Label>
-            <Input id='pa-token' autoComplete='one-time-code' inputMode='numeric' value={token} onChange={(event) => setToken(event.target.value)} />
+            <Input id='pa-token' autoComplete='one-time-code' inputMode='numeric' maxLength={12} placeholder='Ex.: 123456' value={token} onChange={(event) => setToken(event.target.value.replace(/\D/g, '').slice(0, 8))} />
           </div>
           <form onSubmit={handleSubmit} className="space-y-3">
             <div className="space-y-1">
