@@ -52,11 +52,15 @@ for (const scenario of [
     const response = await handler(new Request('https://example.invalid', {
       method: 'POST',
       headers: scenario.token === false ? {} : { Authorization: 'Bearer ficticio' },
-      body: JSON.stringify({ action: 'update', user_id: 'alvo-ficticio', nome: 'Alvo', email: 'alvo@exemplo.invalid', admin: true }),
+      body: JSON.stringify({ action: 'update', user_id: 'alvo-ficticio', nome: 'Alvo', email: 'alvo@exemplo.invalid', profile_id: 'perfil-novo', admin: true }),
     }));
     assert.equal(response.status, scenario.status);
     const adminWrites = writes.filter((w) => w === 'auth:update' || ADMIN_WRITES.some((t) => w.startsWith(`${t}:`)));
-    if (scenario.status === 200) assert.ok(adminWrites.includes('user_roles:upsert'), 'administrador ativo concede a role solicitada');
+    if (scenario.status === 200) {
+      assert.ok(adminWrites.includes('user_roles:upsert'), 'administrador ativo concede a role solicitada');
+      assert.ok(adminWrites.includes('user_access:upsert'), 'troca de perfil gravada em user_access');
+      assert.ok(!adminWrites.some((w) => w.startsWith('user_permissions:')), 'troca de perfil preserva exceções individuais');
+    }
     else assert.deepEqual(adminWrites, [], 'nenhuma alteração de usuário ou role antes da autorização');
   });
 }

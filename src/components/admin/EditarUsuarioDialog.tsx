@@ -101,6 +101,7 @@ export function EditarUsuarioDialog({
   const escoposAtivos = escopos.filter((e) => e.ativo);
   const perfisVisiveis = permProfiles.filter((p) => p.ativo !== false || p.id === perfil);
   const escopoValue = scopeId ? `scope:${scopeId}` : escopo;
+  const perfilSelecionado = perfil === SEM_PERFIL ? null : perfil;
   // Apenas informativo: o nome do perfil nunca concede a role administrativa.
   const perfilAdministradorSemRole =
     !admin &&
@@ -151,6 +152,9 @@ export function EditarUsuarioDialog({
           onOpenChange={setPermsOpen}
           userId={usuario?.id ?? null}
           userNome={nome}
+          profileId={perfilSelecionado}
+          perfilPendente={perfilSelecionado !== (usuario?.profile_id ?? null)}
+          isAdmin={usuario?.admin === true}
         />
 
         <div className="space-y-3">
