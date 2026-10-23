@@ -8,9 +8,11 @@ const corsHeaders = {
 };
 
 const BodySchema = z.object({
-  email: z.string().trim().email().max(320).transform((value) => value.toLowerCase()),
-  password: z.string().min(8).max(128),
-  token: z.string().trim().regex(/^[0-9]{6,8}$/, "Código de e-mail inválido."),
+  email: z.string({ required_error: "Informe um e-mail válido." }).trim().email("Informe um e-mail válido.").max(320, "Informe um e-mail válido.").transform((value) => value.toLowerCase()),
+  password: z.string({ required_error: "A senha precisa ter de 8 a 128 caracteres." }).min(8, "A senha precisa ter de 8 a 128 caracteres.").max(128, "A senha precisa ter de 8 a 128 caracteres."),
+  token: z.string({ required_error: "Informe o código recebido por e-mail." })
+    .transform((value) => value.replace(/\D/g, ""))
+    .pipe(z.string().regex(/^[0-9]{6,8}$/, "Informe o código de 6 a 8 dígitos recebido por e-mail.")),
 });
 
 function json(body: unknown, status = 200) {
@@ -26,10 +28,8 @@ Deno.serve(async (request) => {
 
   const parsed = BodySchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) {
-    return json(
-      { error: "Dados inválidos. Informe um e-mail válido e uma senha de 8 a 128 caracteres." },
-      400,
-    );
+    const message = parsed.error.issues[0]?.message ?? "Dados inválidos.";
+    return json({ error: message }, 400);
   }
 
   const backendUrl = Deno.env.get("SUPABASE_URL");

@@ -38,6 +38,8 @@ export default function PrimeiroAcessoPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    const cleanToken = token.replace(/\D/g, "");
+    if (!/^[0-9]{6,8}$/.test(cleanToken)) return toast.error("Informe o código de 6 a 8 dígitos recebido por e-mail.");
     if (password.length < 8) return toast.error("A senha precisa ter pelo menos 8 caracteres.");
     if (password !== confirm) return toast.error("As senhas não coincidem.");
 
