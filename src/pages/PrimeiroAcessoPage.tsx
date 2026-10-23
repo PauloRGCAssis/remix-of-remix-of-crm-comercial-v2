@@ -23,7 +23,11 @@ export default function PrimeiroAcessoPage() {
   async function sendCode() {
     setBusy(true);
     try {
-      await supabase.auth.signInWithOtp({ email: email.trim().toLowerCase(), options: { shouldCreateUser: false } });
+      const { error } = await supabase.auth.signInWithOtp({
+        email: email.trim().toLowerCase(),
+        options: { shouldCreateUser: false },
+      });
+      if (error) throw error;
       toast.info('Se o cadastro permitir, você receberá um código por e-mail.');
     } catch {
       toast.error('Não foi possível solicitar o código. Tente novamente.');
