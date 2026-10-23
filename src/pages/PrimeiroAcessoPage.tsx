@@ -18,6 +18,19 @@ export default function PrimeiroAcessoPage() {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [busy, setBusy] = useState(false);
+  const [token, setToken] = useState('');
+
+  async function sendCode() {
+    setBusy(true);
+    try {
+      await supabase.auth.signInWithOtp({ email: email.trim().toLowerCase(), options: { shouldCreateUser: false } });
+      toast.info('Se o cadastro permitir, você receberá um código por e-mail.');
+    } catch {
+      toast.error('Não foi possível solicitar o código. Tente novamente.');
+    } finally {
+      setBusy(false);
+    }
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -36,7 +49,7 @@ export default function PrimeiroAcessoPage() {
             apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ email: normalizedEmail, password }),
+          body: JSON.stringify({ email: normalizedEmail, password, token }),
         },
       );
     } catch {
@@ -88,6 +101,11 @@ export default function PrimeiroAcessoPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          <div className='space-y-2 mb-3'>
+            <Button type='button' disabled={busy || !email.trim()} onClick={sendCode}>Enviar código por e-mail</Button>
+            <Label htmlFor='pa-token'>Código recebido por e-mail</Label>
+            <Input id='pa-token' autoComplete='one-time-code' inputMode='numeric' value={token} onChange={(event) => setToken(event.target.value)} />
+          </div>
           <form onSubmit={handleSubmit} className="space-y-3">
             <div className="space-y-1">
               <Label htmlFor="pa-email">E-mail</Label>

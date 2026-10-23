@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
 export interface UserAccess {
+  verified: boolean;
   loading: boolean;
   userId: string | null;
   nome: string | null;
@@ -42,6 +43,9 @@ export function useUserRole(): UserAccess {
     queryKey: ["user-access", userId],
     enabled: !!userId,
     queryFn: async () => {
+      const accessRes = await supabase.from('user_access').select('ativo').eq('user_id', userId!).maybeSingle();
+      if (accessRes.error) throw accessRes.error;
+      if (accessRes.data?.ativo !== true) return null;
       const [profileRes, rolesRes] = await Promise.all([
         supabase
           .from("profiles")
@@ -75,12 +79,13 @@ export function useUserRole(): UserAccess {
   });
 
   return {
+    verified: !!userId && !authLoading && query.isSuccess && !!query.data,
     loading: authLoading || (!!userId && query.isLoading),
     userId,
     nome: query.data?.nome ?? null,
     vendedor: query.data?.vendedor ?? null,
     vendedores: query.data?.vendedores ?? [],
     mustChangePassword: query.data?.mustChangePassword ?? false,
-    isGestor: query.data?.isGestor ?? false,
+    isGestor: !!userId && !authLoading && query.isSuccess && query.data?.isGestor === true,
   };
 }

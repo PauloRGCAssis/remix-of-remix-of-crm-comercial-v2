@@ -45,7 +45,7 @@ export function ProtectedRoute({
   const logged = useRef<string | null>(null);
 
   const moduleKey = modulo ?? moduleKeyForRoute(location.pathname) ?? undefined;
-  const permitido = !moduleKey || perms.loading || perms.can(moduleKey, "acessar");
+  const permitido = perms.ativo && !perms.loading && (!moduleKey || perms.can(moduleKey, "acessar"));
 
   useEffect(() => {
     if (!session || perms.loading || !permitido) return;
@@ -64,7 +64,7 @@ export function ProtectedRoute({
   if (!session) return <Navigate to="/auth" replace state={{ from: location.pathname }} />;
   if (access.loading || perms.loading) return <FullScreenLoader />;
   if (access.mustChangePassword) return <Navigate to="/nova-senha" replace />;
-  if (!perms.ativo && !access.isGestor) return <SemPermissao />;
+  if (!perms.ativo) return <SemPermissao />;
   if (gestorOnly && !access.isGestor) return <Navigate to="/dashboard" replace />;
   if (!permitido) return <SemPermissao />;
 

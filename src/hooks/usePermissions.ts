@@ -53,7 +53,7 @@ export interface PermissionsState {
  * (`tem_permissao` / `pode_ver_vendedor`), então a tela é apenas a 1ª camada.
  */
 export function usePermissions(): PermissionsState {
-  const { userId, isGestor, vendedor, vendedores, loading: roleLoading } = useUserRole();
+  const { userId, isGestor, vendedor, vendedores, verified, loading: roleLoading } = useUserRole();
 
   const query = useQuery({
     queryKey: ["user-permissions", userId],
@@ -75,6 +75,8 @@ export function usePermissions(): PermissionsState {
           .select("nome")
           .eq("id", access.profile_id)
           .maybeSingle();
+        if (perfilRes.error) throw perfilRes.error;
+        if (!perfilRes.data) throw new Error('Perfil indisponível');
         perfilNome = (perfilRes.data as { nome?: string } | null)?.nome ?? null;
         const res = await supabase
           .from("profile_permissions")
@@ -91,6 +93,8 @@ export function usePermissions(): PermissionsState {
           .eq("id", access.scope_id)
           .maybeSingle();
         const row = res.data as unknown as (ResolvedScope & { ativo: boolean }) | null;
+        if (res.error) throw res.error;
+        if (!row?.ativo) throw new Error('Escopo indisponível');
         if (row?.ativo) scope = row;
       }
 
@@ -116,21 +120,18 @@ export function usePermissions(): PermissionsState {
   const escopo: DataScope = isGestor
     ? "empresa"
     : (escopoPersonalizado?.base ?? access?.escopo ?? "meus_dados");
-  const ativo = access?.ativo ?? true;
+  const ativo = !!userId && verified && !roleLoading && query.isSuccess && access?.ativo === true;
   const perfilNome = query.data?.perfilNome ?? null;
   const podeUsarIA =
     isGestor || ["administrador", "gestor"].includes((perfilNome ?? "").trim().toLowerCase());
 
   const can = useCallback(
     (modulo: string, acao: PermissionAction = "acessar") => {
-      if (isGestor) return true;
       if (!ativo) return false;
-      // Sem registro de acesso configurado, mantém o comportamento legado
-      // (vendedor com acesso aos módulos não exclusivos de gestor).
-      if (!access) return !modulo.startsWith("administracao");
+      if (isGestor) return true;
       return map.get(`${modulo}:${acao}`) === true;
     },
-    [isGestor, ativo, access, map],
+    [isGestor, ativo, map],
   );
 
   const vinculados = useMemo(
@@ -139,6 +140,7 @@ export function usePermissions(): PermissionsState {
   );
 
   const vendedoresPermitidos = useMemo(() => {
+    if (!ativo) return [];
     if (isGestor || escopo === "empresa") return null;
     if (escopo === "vendedores_selecionados") {
       const list = [
@@ -150,22 +152,24 @@ export function usePermissions(): PermissionsState {
     }
     // "Meus dados" = todas as carteiras vinculadas ao usuário.
     return vinculados;
-  }, [isGestor, escopo, access, vinculados, escopoPersonalizado]);
+  }, [ativo, isGestor, escopo, access, vinculados, escopoPersonalizado]);
 
   const clientesPermitidos = useMemo(() => {
+    if (!ativo) return [];
     if (isGestor) return null;
     const list = [
       ...(escopoPersonalizado?.clientes ?? []),
       ...(escopoPersonalizado?.grupos_economicos ?? []),
     ].filter(Boolean);
     return list.length ? Array.from(new Set(list)) : null;
-  }, [isGestor, escopoPersonalizado]);
+  }, [ativo, isGestor, escopoPersonalizado]);
 
   const regioesPermitidas = useMemo(() => {
+    if (!ativo) return [];
     if (isGestor) return null;
     const list = (escopoPersonalizado?.regioes ?? []).filter(Boolean);
     return list.length ? Array.from(new Set(list)) : null;
-  }, [isGestor, escopoPersonalizado]);
+  }, [ativo, isGestor, escopoPersonalizado]);
 
   const canSee = useCallback(
     (nome?: string | null) => {
@@ -184,7 +188,7 @@ export function usePermissions(): PermissionsState {
     vendedor,
     escopo,
     perfilNome,
-    podeUsarIA,
+    podeUsarIA: ativo && podeUsarIA,
     escopoPersonalizado,
     vendedoresPermitidos,
     clientesPermitidos,
