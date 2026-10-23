@@ -6,10 +6,13 @@ import {
   useDeleteTaxonomy,
   type TaxonomyTipo,
 } from "@/hooks/useTaxonomies";
+import { useModuleCrud } from "@/hooks/useModuleCrud";
 
 interface QuickCreateSelectProps {
   /** Tipo de cadastro administrável (tabela client_taxonomies). */
   tipo: TaxonomyTipo;
+  /** Módulo do formulário: criar/excluir itens seguem as permissões dele. */
+  modulo: string;
   value: string;
   onChange: (value: string) => void;
   /** Opções base do sistema (não removíveis). */
@@ -31,6 +34,7 @@ function norm(v: string) {
  */
 export function QuickCreateSelect({
   tipo,
+  modulo,
   value,
   onChange,
   baseOptions = [],
@@ -42,6 +46,7 @@ export function QuickCreateSelect({
   const { data: taxonomies = [] } = useTaxonomies(tipo);
   const createTaxonomy = useCreateTaxonomy();
   const deleteTaxonomy = useDeleteTaxonomy();
+  const crud = useModuleCrud(modulo, "itens de cadastro");
 
   const options = useMemo(() => {
     const seen = new Set<string>();
@@ -68,8 +73,9 @@ export function QuickCreateSelect({
       list.push({
         value: t.nome,
         label: t.nome,
-        removable: true,
+        removable: crud.podeExcluir,
         onRemove: async () => {
+          crud.exigir("excluir");
           await deleteTaxonomy.mutateAsync(t.id);
           if (norm(value) === norm(t.nome)) onChange("");
         },
@@ -82,7 +88,7 @@ export function QuickCreateSelect({
     }
 
     return list;
-  }, [baseOptions, taxonomies, emptyLabel, value, deleteTaxonomy, onChange]);
+  }, [baseOptions, taxonomies, emptyLabel, value, deleteTaxonomy, onChange, crud]);
 
   return (
     <CreatableSelect
@@ -92,7 +98,9 @@ export function QuickCreateSelect({
       placeholder={placeholder}
       createLabel={createLabel}
       disabled={disabled}
+      podeCriar={crud.podeCriar}
       onCreate={async (nome) => {
+        crud.exigir("criar");
         const created = await createTaxonomy.mutateAsync({ tipo, nome });
         return created.nome;
       }}

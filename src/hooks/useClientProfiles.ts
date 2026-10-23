@@ -2,6 +2,7 @@ import { useCallback } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useVendorScope, vendorScopeKey } from "@/hooks/useVendorScope";
+import { useModuleCrud } from "@/hooks/useModuleCrud";
 import { isExcludedClientName, normalizeClientName, setDynamicAliases } from "@/lib/clientNameNormalization";
 import type { ClientProfile, ClientProfileInput, Contato, ProdutoNegociadoFicha } from "@/types/clientProfile";
 
@@ -364,8 +365,10 @@ export function useBulkPatchClientProfiles() {
 
 export function useDeleteClientProfile() {
   const qc = useQueryClient();
+  const { exigir } = useModuleCrud("cadastro_clientes", "fichas de clientes");
   return useMutation({
     mutationFn: async (id: string) => {
+      exigir("excluir"); // individual e em lote
       const { error } = await (supabase as any).from("client_profiles").delete().eq("id", id);
       if (error) throw error;
     },

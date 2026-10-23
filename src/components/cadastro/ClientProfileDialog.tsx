@@ -55,6 +55,7 @@ import { normalizeClientName } from "@/lib/clientNameNormalization";
 import { useTaxonomies, useCreateTaxonomy, useDeleteTaxonomy } from "@/hooks/useTaxonomies";
 import { useVendors, useUpsertVendor } from "@/hooks/useVendors";
 import { CreatableSelect } from "@/components/cadastro/CreatableSelect";
+import { PermissionDeniedError, useModuleCrud, type CrudAcao } from "@/hooks/useModuleCrud";
 
 interface Props {
   open: boolean;
@@ -111,6 +112,13 @@ export function ClientProfileDialog({ open, onOpenChange, initial, onSaved }: Pr
   const { toast } = useToast();
   const upsert = useUpsertClientProfile();
   const mergeUpdate = useMergeUpdateClientProfile();
+  // Ficha completa pertence ao Cadastro de Clientes, de qualquer tela que a abra.
+  const crud = useModuleCrud("cadastro_clientes", "fichas de clientes");
+  const semPermissao = (acao: CrudAcao) => {
+    if (crud.pode(acao)) return false;
+    toast({ title: "Sem permissão", description: new PermissionDeniedError(acao, "fichas de clientes").message, variant: "destructive" });
+    return true;
+  };
   const [duplicado, setDuplicado] = useState<ClientProfile | null>(null);
   const { data: segmentosCustom = [] } = useTaxonomies("segmento");
   const { data: ramosCustom = [] } = useTaxonomies("ramo");
@@ -422,6 +430,7 @@ export function ClientProfileDialog({ open, onOpenChange, initial, onSaved }: Pr
   };
 
   const handleSave = async () => {
+    if (semPermissao(initial?.id ? "editar" : "criar")) return;
     if (!form.nome.trim()) {
       toast({
         title: isPessoaFisica ? "Nome completo é obrigatório" : "Razão Social é obrigatória",
@@ -515,6 +524,7 @@ export function ClientProfileDialog({ open, onOpenChange, initial, onSaved }: Pr
 
   const handleAtualizarExistente = async () => {
     if (!duplicado) return;
+    if (semPermissao("editar")) return; // mescla na ficha existente
     try {
       const saved = await mergeUpdate.mutateAsync({ id: duplicado.id, data: montarPayload() });
       setDuplicado(null);
@@ -620,6 +630,7 @@ export function ClientProfileDialog({ open, onOpenChange, initial, onSaved }: Pr
                   onChange={(v) => update("segmento", v)}
                   placeholder="Selecione..."
                   createLabel="Cadastrar novo segmento"
+                  podeCriar={crud.podeCriar}
                   options={[
                     ...SEGMENTOS.map((s) => ({ value: s, label: s })),
                     ...segmentosCustom
@@ -627,11 +638,15 @@ export function ClientProfileDialog({ open, onOpenChange, initial, onSaved }: Pr
                       .map((t) => ({
                         value: t.nome,
                         label: t.nome,
-                        removable: true,
-                        onRemove: () => deleteTaxonomy.mutateAsync(t.id),
+                        removable: crud.podeExcluir,
+                        onRemove: async () => {
+                          crud.exigir("excluir");
+                          await deleteTaxonomy.mutateAsync(t.id);
+                        },
                       })),
                   ]}
                   onCreate={async (nome) => {
+                    crud.exigir("criar");
                     const t = await createTaxonomy.mutateAsync({ tipo: "segmento", nome });
                     return t.nome;
                   }}
@@ -644,6 +659,7 @@ export function ClientProfileDialog({ open, onOpenChange, initial, onSaved }: Pr
                   onChange={(v) => update("ramo_atividade", v)}
                   placeholder="Selecione..."
                   createLabel="Cadastrar novo ramo"
+                  podeCriar={crud.podeCriar}
                   options={[
                     ...RAMOS_ATIVIDADE.map((r) => ({ value: r, label: r })),
                     ...ramosCustom
@@ -651,11 +667,15 @@ export function ClientProfileDialog({ open, onOpenChange, initial, onSaved }: Pr
                       .map((t) => ({
                         value: t.nome,
                         label: t.nome,
-                        removable: true,
-                        onRemove: () => deleteTaxonomy.mutateAsync(t.id),
+                        removable: crud.podeExcluir,
+                        onRemove: async () => {
+                          crud.exigir("excluir");
+                          await deleteTaxonomy.mutateAsync(t.id);
+                        },
                       })),
                   ]}
                   onCreate={async (nome) => {
+                    crud.exigir("criar");
                     const t = await createTaxonomy.mutateAsync({ tipo: "ramo", nome });
                     return t.nome;
                   }}
@@ -668,6 +688,7 @@ export function ClientProfileDialog({ open, onOpenChange, initial, onSaved }: Pr
                   onChange={(v) => update("vendedor", v)}
                   placeholder="Selecione..."
                   createLabel="Cadastrar novo vendedor"
+                  podeCriar={crud.podeCriar}
                   options={(() => {
                     const ativos = vendorsData.filter((v) => v.ativo).map((v) => v.nome);
                     const merged = Array.from(new Set([...TEAM_VENDEDORES, ...ativos]));
@@ -676,6 +697,7 @@ export function ClientProfileDialog({ open, onOpenChange, initial, onSaved }: Pr
                       .map((nome) => ({ value: nome, label: nome }));
                   })()}
                   onCreate={async (nome) => {
+                    crud.exigir("criar");
                     await upsertVendor.mutateAsync({ nome, ativo: true, is_team: false });
                     return nome;
                   }}
@@ -716,6 +738,7 @@ export function ClientProfileDialog({ open, onOpenChange, initial, onSaved }: Pr
                     <Label className="text-xs">Classificação do ponto de venda</Label>
                     <QuickCreateSelect
                       tipo="pdv_tipo"
+                      modulo="cadastro_clientes"
                       value={form.pdv_tipo || ""}
                       onChange={(v) => update("pdv_tipo", v)}
                       baseOptions={TIPOS_PONTO_VENDA}

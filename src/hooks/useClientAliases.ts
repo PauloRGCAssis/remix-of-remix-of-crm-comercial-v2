@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useModuleCrud } from "@/hooks/useModuleCrud";
 import { setDynamicAliases, EXCLUDED_CANONICAL } from "@/lib/clientNameNormalization";
 
 export interface ClientAlias {
@@ -22,6 +23,8 @@ const DECISIONS_KEY = ["client-duplicate-decisions"];
 
 export function useClientAliases() {
   const qc = useQueryClient();
+  // Agrupar/separar/adiar/restaurar = editar; desfazer agrupamento e excluir das análises = excluir.
+  const { exigir } = useModuleCrud("clientes_duplicados", "clientes duplicados");
 
   const aliasesQ = useQuery({
     queryKey: ALIASES_KEY,
@@ -61,6 +64,7 @@ export function useClientAliases() {
 
   const addAlias = useMutation({
     mutationFn: async (payload: { canonical: string; alias: string; motivo?: string }) => {
+      exigir("editar");
       const { error } = await supabase
         .from("client_aliases" as any)
         .upsert(
@@ -83,6 +87,7 @@ export function useClientAliases() {
 
   const removeAlias = useMutation({
     mutationFn: async (id: string) => {
+      exigir("excluir");
       const { error } = await supabase.from("client_aliases" as any).delete().eq("id", id);
       if (error) throw error;
     },
@@ -95,6 +100,7 @@ export function useClientAliases() {
 
   const setDecision = useMutation({
     mutationFn: async (payload: { a: string; b: string; decisao: DuplicateDecision["decisao"] }) => {
+      exigir("editar");
       const [cliente_a, cliente_b] = [payload.a, payload.b].sort();
       const { error } = await supabase
         .from("client_duplicate_decisions" as any)
@@ -109,6 +115,7 @@ export function useClientAliases() {
 
   const excludeClient = useMutation({
     mutationFn: async (payload: { nome: string; motivo?: string }) => {
+      exigir("excluir");
       const { error } = await supabase
         .from("client_aliases" as any)
         .upsert(
@@ -127,6 +134,7 @@ export function useClientAliases() {
 
   const restoreClient = useMutation({
     mutationFn: async (nome: string) => {
+      exigir("editar");
       const { error } = await supabase
         .from("client_aliases" as any)
         .delete()

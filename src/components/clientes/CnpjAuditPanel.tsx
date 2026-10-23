@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { SaleRow } from "@/hooks/useSalesData";
 import type { ClientAlias } from "@/hooks/useClientAliases";
+import { useModuleCrud } from "@/hooks/useModuleCrud";
 
 interface CnpjGroup {
   cnpj: string;
@@ -43,6 +44,8 @@ function pickCanonical(variantes: string[]): string {
 export function CnpjAuditPanel({ sales, aliases }: Props) {
   const qc = useQueryClient();
   const [running, setRunning] = useState(false);
+  // Unificação por CNPJ em lote = agrupar (editar) em Clientes Duplicados.
+  const { podeEditar } = useModuleCrud("clientes_duplicados", "clientes duplicados");
 
   const aliasSet = useMemo(() => new Set(aliases.map(a => a.alias_name)), [aliases]);
 
@@ -89,6 +92,10 @@ export function CnpjAuditPanel({ sales, aliases }: Props) {
   }, [sales]);
 
   async function unifyAll() {
+    if (!podeEditar) {
+      toast.error("Sem permissão para editar clientes duplicados.");
+      return;
+    }
     setRunning(true);
     let applied = 0;
     let failed = 0;
@@ -146,7 +153,7 @@ export function CnpjAuditPanel({ sales, aliases }: Props) {
             {pendentes > 0 && (
               <Badge variant="destructive" className="text-[11px]">{pendentes} variante(s) não unificada(s)</Badge>
             )}
-            <Button size="sm" variant="outline" onClick={unifyAll} disabled={running || pendentes === 0}>
+            <Button size="sm" variant="outline" onClick={unifyAll} disabled={running || pendentes === 0 || !podeEditar}>
               <RefreshCcw className={`h-3 w-3 mr-1 ${running ? "animate-spin" : ""}`} />
               Reprocessar pedidos e clientes (por CNPJ)
             </Button>

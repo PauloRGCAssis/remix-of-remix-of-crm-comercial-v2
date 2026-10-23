@@ -68,6 +68,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useClientProfiles, usePatchClientProfile } from "@/hooks/useClientProfiles";
+import { PermissionDeniedError, useModuleCrud, type CrudAcao } from "@/hooks/useModuleCrud";
+import { usePermissions } from "@/hooks/usePermissions";
 import { useSalesData, filterByDateRange, getUniqueVendedores, shortVendedorName } from "@/hooks/useSalesData";
 
 import { ClientProfileDialog } from "@/components/cadastro/ClientProfileDialog";
@@ -142,6 +144,18 @@ export default function PontoVendaPage() {
   const { toast } = useToast();
   const { user } = useAuth();
   const autor = user?.email ?? user?.id ?? "usuário do sistema";
+  const crud = useModuleCrud("ponto_venda", "pontos de venda");
+  // Ficha completa pertence ao Cadastro de Clientes; importação exige a mesma permissão do servidor.
+  const fichaCrud = useModuleCrud("cadastro_clientes", "fichas de clientes");
+  const { can } = usePermissions();
+  const podeImportar = can("especial.importar_dados");
+  // Ativar = editar; inativar = excluir (regra aprovada).
+  const acaoStatus = (p: ClientProfile): CrudAcao => (p.pdv_ativo ? "excluir" : "editar");
+  const semPermissao = (acao: CrudAcao) => {
+    if (crud.pode(acao)) return false;
+    toast({ title: "Sem permissão", description: new PermissionDeniedError(acao, "pontos de venda").message, variant: "destructive" });
+    return true;
+  };
 
   const [inicio, setInicio] = useState("");
   const [fim, setFim] = useState("");
@@ -314,6 +328,7 @@ export default function PontoVendaPage() {
   };
 
   const toggleStatus = async (l: Linha) => {
+    if (semPermissao(acaoStatus(l.profile))) return;
     try {
       await patch.mutateAsync({
         id: l.profile.id,
@@ -330,6 +345,7 @@ export default function PontoVendaPage() {
   };
 
   const removerDaLista = async (l: Linha) => {
+    if (semPermissao("excluir")) { setRemovendo(null); return; } // exclusão lógica
     try {
       await patch.mutateAsync({
         id: l.profile.id,
@@ -452,12 +468,16 @@ export default function PontoVendaPage() {
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <PodeCriar modulo={'ponto_venda'}><Button onClick={() => setNovoOpen(true)}>
-              <Plus className="mr-1 h-4 w-4" /> Cadastrar novo ponto de venda
-            </Button></PodeCriar>
-            <Button variant="outline" onClick={() => setAddOpen(true)}>
-              <FileSpreadsheet className="mr-1 h-4 w-4" /> Importar planilha
-            </Button>
+            {crud.podeCriar && (
+              <PodeCriar modulo={'ponto_venda'}><Button onClick={() => setNovoOpen(true)}>
+                <Plus className="mr-1 h-4 w-4" /> Cadastrar novo ponto de venda
+              </Button></PodeCriar>
+            )}
+            {podeImportar && (
+              <Button variant="outline" onClick={() => setAddOpen(true)}>
+                <FileSpreadsheet className="mr-1 h-4 w-4" /> Importar planilha
+              </Button>
+            )}
           </div>
         </div>
 
@@ -629,7 +649,7 @@ export default function PontoVendaPage() {
                                 {p.pdv_tipo && (
                                   <Badge variant="outline" className="text-[10px]">{p.pdv_tipo}</Badge>
                                 )}
-                                <Tooltip>
+                                {crud.podeEditar && <Tooltip>
                                   <TooltipTrigger asChild>
                                     <Button
                                       size="icon"
@@ -642,8 +662,8 @@ export default function PontoVendaPage() {
                                     </Button>
                                   </TooltipTrigger>
                                   <TooltipContent>Editar ponto de venda</TooltipContent>
-                                </Tooltip>
-                                <Tooltip>
+                                </Tooltip>}
+                                {crud.podeExcluir && <Tooltip>
                                   <TooltipTrigger asChild>
                                     <Button
                                       size="icon"
@@ -656,7 +676,7 @@ export default function PontoVendaPage() {
                                     </Button>
                                   </TooltipTrigger>
                                   <TooltipContent>Remover ponto de venda</TooltipContent>
-                                </Tooltip>
+                                </Tooltip>}
                                 <DropdownMenu>
                                   <DropdownMenuTrigger asChild>
                                     <Button size="icon" variant="ghost" className="h-6 w-6" aria-label="Mais ações">
@@ -667,12 +687,16 @@ export default function PontoVendaPage() {
                                     <DropdownMenuItem onClick={() => setDetalhe(p)}>
                                       <Eye className="mr-2 h-3 w-3" /> Visualizar detalhes
                                     </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={() => setEditing(p)}>
-                                      <Pencil className="mr-2 h-3 w-3" /> Editar ficha completa
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={() => toggleStatus(l)}>
-                                      {p.pdv_ativo ? "Marcar como inativo" : "Marcar como ativo"}
-                                    </DropdownMenuItem>
+                                    {fichaCrud.podeEditar && (
+                                      <DropdownMenuItem onClick={() => setEditing(p)}>
+                                        <Pencil className="mr-2 h-3 w-3" /> Editar ficha completa
+                                      </DropdownMenuItem>
+                                    )}
+                                    {crud.pode(acaoStatus(p)) && (
+                                      <DropdownMenuItem onClick={() => toggleStatus(l)}>
+                                        {p.pdv_ativo ? "Marcar como inativo" : "Marcar como ativo"}
+                                      </DropdownMenuItem>
+                                    )}
                                     <DropdownMenuItem
                                       disabled={!zap}
                                       onClick={() => window.open(`https://wa.me/${normalizePhone(zap)}`, "_blank")}
@@ -752,7 +776,7 @@ export default function PontoVendaPage() {
                             </TableCell>
                             <TableCell onClick={(e) => e.stopPropagation()}>
                               <div className="flex items-center gap-2">
-                                <Switch checked={p.pdv_ativo} onCheckedChange={() => toggleStatus(l)} />
+                                <Switch checked={p.pdv_ativo} disabled={!crud.pode(acaoStatus(p))} onCheckedChange={() => toggleStatus(l)} />
                                 <span className="text-xs">{p.pdv_ativo ? "Ativo" : "Inativo"}</span>
                               </div>
                             </TableCell>

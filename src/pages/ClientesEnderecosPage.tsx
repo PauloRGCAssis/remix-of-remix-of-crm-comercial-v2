@@ -29,6 +29,7 @@ import {
   useCreateClientProfilesRaw,
 } from "@/hooks/useClientProfiles";
 import { useFullClientDirectory } from "@/hooks/useClientDirectory";
+import { PermissionDeniedError, useModuleCrud, type CrudAcao } from "@/hooks/useModuleCrud";
 import {
   useAddressStaging,
   useAddressStagingStats,
@@ -89,6 +90,13 @@ export default function ClientesEnderecosPage() {
   const markApplied = useMarkStagingApplied();
   const deleteStaging = useDeleteStaging();
   const { toast } = useToast();
+  // Importar planilha e criar fichas = criar; associar endereço = editar; descartar = excluir.
+  const crud = useModuleCrud("clientes_enderecos", "endereços de clientes");
+  const semPermissao = (acao: CrudAcao) => {
+    if (crud.pode(acao)) return false;
+    toast({ title: "Sem permissão", description: new PermissionDeniedError(acao, "endereços de clientes").message, variant: "destructive" });
+    return true;
+  };
   const fileRef = useRef<HTMLInputElement>(null);
 
   const [rows, setRows] = useState<Record<string, any>[]>([]);
@@ -190,6 +198,7 @@ export default function ClientesEnderecosPage() {
 
   const aplicar = async () => {
     if (!rows.length) return;
+    if (semPermissao("criar")) return;
     const t0 = performance.now();
     setSaving(true);
     const rel: Relatorio = {
@@ -316,6 +325,7 @@ export default function ClientesEnderecosPage() {
 
   /** Aplica um registro pendente a um cliente (ficha existente ou cliente que só existe nas vendas). */
   const aplicarRef = async (item: any, ref: ClientRef) => {
+    if (semPermissao("editar")) return;
     try {
       let profileId = ref.id;
       if (!profileId) {
@@ -343,6 +353,7 @@ export default function ClientesEnderecosPage() {
   /** Cruzamento em lote de todos os pendentes de alta confiança. */
   const executarAssociacao = async () => {
     if (!autoAplicaveis.length) return;
+    if (semPermissao("editar")) return;
     setRodando(true);
     const via: Record<string, number> = {};
     const erros: string[] = [];
@@ -392,6 +403,7 @@ export default function ClientesEnderecosPage() {
   /** Cria fichas para registros do cadastro Sige que não existem em nenhuma base. */
   const criarFichasDoCadastro = async () => {
     if (!semCorrespondencia.length) return;
+    if (semPermissao("criar")) return;
     setRodando(true);
     const erros: string[] = [];
     let criadas = 0;
@@ -445,9 +457,11 @@ export default function ClientesEnderecosPage() {
                 if (f) void handleFile(f);
               }}
             />
-            <Button onClick={() => fileRef.current?.click()}>
-              <FileSpreadsheet className="mr-1 h-4 w-4" /> Importar planilha de cadastro
-            </Button>
+            {crud.podeCriar && (
+              <Button onClick={() => fileRef.current?.click()}>
+                <FileSpreadsheet className="mr-1 h-4 w-4" /> Importar planilha de cadastro
+              </Button>
+            )}
             {rows.length > 0 && <Badge variant="secondary">{rows.length} linha(s) · {fileName}</Badge>}
           </CardContent>
         </Card>
@@ -513,7 +527,7 @@ export default function ClientesEnderecosPage() {
                 <CardTitle className="text-sm">4. Aplicar importação</CardTitle>
               </CardHeader>
               <CardContent className="flex flex-wrap items-center gap-3">
-                <Button onClick={aplicar} disabled={saving}>
+                <Button onClick={aplicar} disabled={saving || !crud.podeCriar}>
                   {saving && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}
                   Aplicar importação
                 </Button>
@@ -592,7 +606,7 @@ export default function ClientesEnderecosPage() {
               importadas. Nada é fundido apenas por semelhança: nomes parecidos viram sugestão.
             </p>
             <div className="flex flex-wrap items-center gap-2">
-              <Button size="sm" onClick={() => void executarAssociacao()} disabled={rodando || carregandoBase || !autoAplicaveis.length}>
+              <Button size="sm" onClick={() => void executarAssociacao()} disabled={rodando || carregandoBase || !autoAplicaveis.length || !crud.podeEditar}>
                 {(rodando || carregandoBase) && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}
                 Executar associação automática ({carregandoBase ? "..." : autoAplicaveis.length})
               </Button>
@@ -600,7 +614,7 @@ export default function ClientesEnderecosPage() {
                 size="sm"
                 variant="outline"
                 onClick={() => void criarFichasDoCadastro()}
-                disabled={rodando || carregandoBase || !semCorrespondencia.length}
+                disabled={rodando || carregandoBase || !semCorrespondencia.length || !crud.podeCriar}
               >
                 Criar ficha a partir do cadastro Sige ({carregandoBase ? "..." : semCorrespondencia.length})
               </Button>
@@ -665,7 +679,7 @@ export default function ClientesEnderecosPage() {
                   {res.status === "match" && (
                     <p className="truncate text-xs text-muted-foreground">→ {res.ref.nome}</p>
                   )}
-                  {res.status === "sugestao" && (
+                  {res.status === "sugestao" && crud.podeEditar && (
                     <div className="mt-1 flex flex-wrap gap-1">
                       {res.sugestoes.map((s, i) => (
                         <Button
@@ -685,10 +699,12 @@ export default function ClientesEnderecosPage() {
                   )}
                 </div>
                 <div className="flex items-center gap-2">
-                  <ClienteSelectSearch refs={clientRefs} onSelect={(ref) => void aplicarRef(item, ref)} />
-                  <Button size="sm" variant="ghost" onClick={() => void deleteStaging.mutateAsync(item.id)}>
-                    Descartar
-                  </Button>
+                  {crud.podeEditar && <ClienteSelectSearch refs={clientRefs} onSelect={(ref) => void aplicarRef(item, ref)} />}
+                  {crud.podeExcluir && (
+                    <Button size="sm" variant="ghost" onClick={() => { if (!semPermissao("excluir")) void deleteStaging.mutateAsync(item.id); }}>
+                      Descartar
+                    </Button>
+                  )}
                 </div>
               </div>
             ))}

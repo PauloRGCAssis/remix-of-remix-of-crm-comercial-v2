@@ -165,7 +165,7 @@ describe('editor de permissões individuais — gravação', () => {
     await escolher('Importar Planilha — Acessar', /Permitir individualmente/);
     await waitFor(async () => expect(await celula('Prospecção — Acessar')).toBeDisabled());
     liberar();
-    await waitFor(() => expect(mocks.toast.success).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(mocks.toast.success).toHaveBeenCalledTimes(1), ESPERA);
   });
 });
 

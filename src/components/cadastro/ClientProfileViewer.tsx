@@ -5,6 +5,7 @@ import { Separator } from "@/components/ui/separator";
 import { Download, Pencil, Share2, MessageCircle } from "lucide-react";
 import type { ClientProfile } from "@/types/clientProfile";
 import { useToast } from "@/hooks/use-toast";
+import { useModuleCrud } from "@/hooks/useModuleCrud";
 import { savePdfDoc, preopenPdfTab } from "@/lib/pdfDownload";
 import { buildClientProfilePdf, slugifyClientName } from "@/lib/clientProfilePdf";
 import { ClienteAcoesComerciais } from "@/components/acoes/ClienteAcoesComerciais";
@@ -34,6 +35,8 @@ function buildAddress(p: ClientProfile, type: "main" | "delivery") {
 
 export function ClientProfileViewer({ open, onOpenChange, profile, onEdit }: Props) {
   const { toast } = useToast();
+  // Ficha completa pertence ao Cadastro de Clientes, de qualquer tela que a abra.
+  const { podeEditar } = useModuleCrud("cadastro_clientes", "fichas de clientes");
   if (!profile) return null;
 
   const baseName = (profile.nome_fantasia && profile.nome_fantasia.trim()) || profile.nome;
@@ -148,9 +151,11 @@ export function ClientProfileViewer({ open, onOpenChange, profile, onEdit }: Pro
               )}
             </div>
             <div className="flex flex-wrap gap-2">
-              <Button size="sm" variant="outline" onClick={onEdit}>
-                <Pencil className="h-3 w-3 mr-1" /> Editar
-              </Button>
+              {podeEditar && (
+                <Button size="sm" variant="outline" onClick={onEdit}>
+                  <Pencil className="h-3 w-3 mr-1" /> Editar
+                </Button>
+              )}
               <Button size="sm" variant="outline" onClick={shareWhatsApp}>
                 <MessageCircle className="h-3 w-3 mr-1" />
                 WhatsApp

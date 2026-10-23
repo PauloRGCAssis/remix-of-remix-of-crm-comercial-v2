@@ -48,6 +48,7 @@ import {
   useCommercialActions,
   type CommercialAction,
 } from "@/hooks/useCommercialActions";
+import { useModuleCrud } from "@/hooks/useModuleCrud";
 import { useActiveVendorNames } from "@/hooks/useVendors";
 
 const money = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -58,6 +59,7 @@ const ALL = "__all__";
 
 export default function AcoesComerciaisPage() {
   const { list, remove, update } = useCommercialActions();
+  const { podeCriar, podeEditar, podeExcluir } = useModuleCrud("acoes_comerciais", "ações comerciais");
   const types = useCommercialActionTypes();
   const vendedores = useActiveVendorNames();
 
@@ -259,9 +261,11 @@ export default function AcoesComerciaisPage() {
               Controle das campanhas promocionais: regras, período, investimento e resultados.
             </p>
           </div>
-          <PodeCriar modulo={'acoes_comerciais'}><Button onClick={openCreate}>
-            <Plus className="h-4 w-4 mr-1" /> Nova Ação
-          </Button></PodeCriar>
+          {podeCriar && (
+            <PodeCriar modulo={'acoes_comerciais'}><Button onClick={openCreate}>
+              <Plus className="h-4 w-4 mr-1" /> Nova Ação
+            </Button></PodeCriar>
+          )}
         </div>
 
         {/* Dashboard */}
@@ -407,28 +411,32 @@ export default function AcoesComerciaisPage() {
             <span className="text-sm font-medium">
               {selectedIds.length === 1 ? "1 ação selecionada" : `${selectedIds.length} ações selecionadas`}
             </span>
-            <Button
-              size="sm"
-              variant="outline"
-              disabled={selectedIds.length !== 1}
-              onClick={() => {
-                const a = filtered.find((x) => x.id === selectedIds[0]);
-                if (a) openDuplicate(a);
-              }}
-            >
-              <Copy className="h-3.5 w-3.5 mr-1" /> Duplicar
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              disabled={selectedIds.length !== 1}
-              onClick={() => {
-                const a = filtered.find((x) => x.id === selectedIds[0]);
-                if (a) { setSelected(a); setBulkOpen(true); }
-              }}
-            >
-              <Users className="h-3.5 w-3.5 mr-1" /> Copiar para clientes
-            </Button>
+            {podeCriar && (
+              <>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={selectedIds.length !== 1}
+                  onClick={() => {
+                    const a = filtered.find((x) => x.id === selectedIds[0]);
+                    if (a) openDuplicate(a);
+                  }}
+                >
+                  <Copy className="h-3.5 w-3.5 mr-1" /> Duplicar
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={selectedIds.length !== 1}
+                  onClick={() => {
+                    const a = filtered.find((x) => x.id === selectedIds[0]);
+                    if (a) { setSelected(a); setBulkOpen(true); }
+                  }}
+                >
+                  <Users className="h-3.5 w-3.5 mr-1" /> Copiar para clientes
+                </Button>
+              </>
+            )}
             <Button size="sm" variant="ghost" onClick={() => setSelectedIds([])}>
               Limpar seleção
             </Button>
@@ -506,20 +514,28 @@ export default function AcoesComerciaisPage() {
                             onClick={() => { setSelected(a); setHistOpen(true); }}>
                             <History className="h-3.5 w-3.5" />
                           </Button>
-                          <Button size="icon" variant="ghost" className="h-6 w-6 text-muted-foreground hover:text-foreground" title="Editar" onClick={() => openEdit(a)}>
-                            <Pencil className="h-3.5 w-3.5" />
-                          </Button>
-                          <Button size="icon" variant="ghost" className="h-6 w-6 text-muted-foreground hover:text-foreground" title="Duplicar" onClick={() => openDuplicate(a)}>
-                            <Copy className="h-3.5 w-3.5" />
-                          </Button>
-                          <Button size="icon" variant="ghost" className="h-6 w-6 text-muted-foreground hover:text-foreground" title="Copiar para clientes"
-                            onClick={() => { setSelected(a); setBulkOpen(true); }}>
-                            <Users className="h-3.5 w-3.5" />
-                          </Button>
-                          <Button size="icon" variant="ghost" className="h-6 w-6 text-muted-foreground hover:text-destructive" title="Excluir"
-                            onClick={() => setToDelete(a)}>
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </Button>
+                          {podeEditar && (
+                            <Button size="icon" variant="ghost" className="h-6 w-6 text-muted-foreground hover:text-foreground" title="Editar" onClick={() => openEdit(a)}>
+                              <Pencil className="h-3.5 w-3.5" />
+                            </Button>
+                          )}
+                          {podeCriar && (
+                            <>
+                              <Button size="icon" variant="ghost" className="h-6 w-6 text-muted-foreground hover:text-foreground" title="Duplicar" onClick={() => openDuplicate(a)}>
+                                <Copy className="h-3.5 w-3.5" />
+                              </Button>
+                              <Button size="icon" variant="ghost" className="h-6 w-6 text-muted-foreground hover:text-foreground" title="Copiar para clientes"
+                                onClick={() => { setSelected(a); setBulkOpen(true); }}>
+                                <Users className="h-3.5 w-3.5" />
+                              </Button>
+                            </>
+                          )}
+                          {podeExcluir && (
+                            <Button size="icon" variant="ghost" className="h-6 w-6 text-muted-foreground hover:text-destructive" title="Excluir"
+                              onClick={() => setToDelete(a)}>
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          )}
                         </div>
                       </td>
 
@@ -528,6 +544,11 @@ export default function AcoesComerciaisPage() {
                       <td className="px-3 py-2 whitespace-nowrap">{br(a.data_inicio)}</td>
                       <td className="px-3 py-2 whitespace-nowrap">{br(a.data_fim)}</td>
                       <td className="px-3 py-2">
+                        {!podeEditar ? (
+                          <Badge variant="outline" className={STATUS_CLASS[a.status]}>
+                            {a.status}
+                          </Badge>
+                        ) : (
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <button type="button" title="Clique para alterar o status">
@@ -553,6 +574,7 @@ export default function AcoesComerciaisPage() {
                             ))}
                           </DropdownMenuContent>
                         </DropdownMenu>
+                        )}
                       </td>
 
                       <td className="px-3 py-2 text-right whitespace-nowrap">

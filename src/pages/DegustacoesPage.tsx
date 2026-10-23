@@ -36,6 +36,7 @@ import {
 import { Plus, Copy, FileDown, Eye, MoreVertical, Pencil, Trash2, CheckCircle2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useDegustacoes, Degustacao, DegustacaoStatus } from "@/hooks/useDegustacoes";
+import { useModuleCrud } from "@/hooks/useModuleCrud";
 import { DegustacaoFormDialog } from "@/components/degustacoes/DegustacaoFormDialog";
 import { DuplicarDegustacoesDialog } from "@/components/degustacoes/DuplicarDegustacoesDialog";
 import { DuplicateActionDialog } from "@/components/degustacoes/DuplicateActionDialog";
@@ -90,6 +91,7 @@ const STATUS_FULL_LABEL: Record<DegustacaoStatus, string> = {
 
 export default function DegustacoesPage() {
   const { list, create, update, remove, bulkInsert, bulkUpdateStatus } = useDegustacoes();
+  const { podeCriar, podeEditar, podeExcluir } = useModuleCrud("degustacoes", "degustações");
   const { sincronizar, dialogProps: syncDialogProps } = useCadastroCentralSync();
 
   const all = list.data ?? [];
@@ -517,12 +519,14 @@ export default function DegustacoesPage() {
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button variant="outline" onClick={handleDuplicateBatchClick}>
-              <Copy className="h-4 w-4 mr-2" />
-              {degustacoesSelecionadas.length > 0
-                ? `Duplicar ${degustacoesSelecionadas.length} selecionada(s)`
-                : "Duplicar degustações"}
-            </Button>
+            {podeCriar && (
+              <Button variant="outline" onClick={handleDuplicateBatchClick}>
+                <Copy className="h-4 w-4 mr-2" />
+                {degustacoesSelecionadas.length > 0
+                  ? `Duplicar ${degustacoesSelecionadas.length} selecionada(s)`
+                  : "Duplicar degustações"}
+              </Button>
+            )}
             <Button variant="outline" onClick={visualizarPDF}>
               <Eye className="h-4 w-4 mr-2" /> Visualizar PDF
               {selectedDegustacaoIds.length > 0 ? ` — ${selectedDegustacaoIds.length} selecionada(s)` : ""}
@@ -534,9 +538,11 @@ export default function DegustacoesPage() {
             <Button variant="outline" onClick={exportExcel} className="border-amber-500/40 text-amber-700 hover:bg-amber-50 dark:text-amber-300 dark:hover:bg-amber-500/10">
               <FileSpreadsheet className="h-4 w-4 mr-2" /> Exportar Excel
             </Button>
-            <PodeCriar modulo={'degustacoes'}><Button onClick={openNew}>
-              <Plus className="h-4 w-4 mr-2" /> Nova Degustação
-            </Button></PodeCriar>
+            {podeCriar && (
+              <PodeCriar modulo={'degustacoes'}><Button onClick={openNew}>
+                <Plus className="h-4 w-4 mr-2" /> Nova Degustação
+              </Button></PodeCriar>
+            )}
           </div>
         </div>
 
@@ -606,7 +612,7 @@ export default function DegustacoesPage() {
               </span>
             </label>
 
-            {visibleSelectedIds.length > 0 && (
+            {visibleSelectedIds.length > 0 && podeEditar && (
               <div className="flex items-center gap-2 ml-auto flex-wrap">
                 <span className="text-sm text-muted-foreground hidden sm:inline">
                   Mudar status das selecionadas:
@@ -678,7 +684,7 @@ export default function DegustacoesPage() {
                       />
                     </td>
                     <td className="p-3 pb-1">
-                      <Select value={d.status} onValueChange={(v) => update.mutate({ id: d.id, patch: { status: v as DegustacaoStatus } })}>
+                      <Select disabled={!podeEditar} value={d.status} onValueChange={(v) => update.mutate({ id: d.id, patch: { status: v as DegustacaoStatus } })}>
                         <SelectTrigger className={`h-8 w-full border ${STATUS_META[d.status].className}`}>
                           <SelectValue />
                         </SelectTrigger>
@@ -711,10 +717,10 @@ export default function DegustacoesPage() {
                       <div className="flex items-center gap-1.5 flex-wrap">
                         <RowActions
                           d={d}
-                          onEdit={() => openEdit(d)}
-                          onDuplicate={() => handleDuplicateOne(d)}
-                          onConfirm={() => handleConfirmRealizada(d)}
-                          onDelete={() => setDeleteTarget(d)}
+                          onEdit={podeEditar ? () => openEdit(d) : undefined}
+                          onDuplicate={podeCriar ? () => handleDuplicateOne(d) : undefined}
+                          onConfirm={podeEditar ? () => handleConfirmRealizada(d) : undefined}
+                          onDelete={podeExcluir ? () => setDeleteTarget(d) : undefined}
                         />
                       </div>
                     </td>
@@ -758,10 +764,10 @@ export default function DegustacoesPage() {
                 <div className="shrink-0 -mr-1">
                   <RowActions
                     d={d}
-                    onEdit={() => openEdit(d)}
-                    onDuplicate={() => handleDuplicateOne(d)}
-                    onConfirm={() => handleConfirmRealizada(d)}
-                    onDelete={() => setDeleteTarget(d)}
+                    onEdit={podeEditar ? () => openEdit(d) : undefined}
+                    onDuplicate={podeCriar ? () => handleDuplicateOne(d) : undefined}
+                    onConfirm={podeEditar ? () => handleConfirmRealizada(d) : undefined}
+                    onDelete={podeExcluir ? () => setDeleteTarget(d) : undefined}
                     compact
                   />
                 </div>
@@ -984,35 +990,40 @@ function RowActions({
   d, onEdit, onDuplicate, onConfirm, onDelete, compact = false,
 }: {
   d: Degustacao;
-  onEdit: () => void;
-  onDuplicate: () => void;
-  onConfirm: () => void;
-  onDelete: () => void;
+  // Ação ausente = sem permissão: o botão não é exibido.
+  onEdit?: () => void;
+  onDuplicate?: () => void;
+  onConfirm?: () => void;
+  onDelete?: () => void;
   compact?: boolean;
 }) {
   return (
     <div className={`flex items-center gap-1 ${compact ? "flex-wrap justify-end" : "justify-end"}`}>
-      <Button
-        variant="outline"
-        size="sm"
-        className="h-8 px-2"
-        onClick={onEdit}
-        title="Editar"
-      >
-        <Pencil className="h-3.5 w-3.5 sm:mr-1" />
-        <span className="hidden sm:inline">Editar</span>
-      </Button>
-      <Button
-        variant="outline"
-        size="sm"
-        className="h-8 px-2"
-        onClick={onDuplicate}
-        title="Duplicar"
-      >
-        <Copy className="h-3.5 w-3.5 sm:mr-1" />
-        <span className="hidden sm:inline">Duplicar</span>
-      </Button>
-      {d.status !== "realizada" && (
+      {onEdit && (
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-8 px-2"
+          onClick={onEdit}
+          title="Editar"
+        >
+          <Pencil className="h-3.5 w-3.5 sm:mr-1" />
+          <span className="hidden sm:inline">Editar</span>
+        </Button>
+      )}
+      {onDuplicate && (
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-8 px-2"
+          onClick={onDuplicate}
+          title="Duplicar"
+        >
+          <Copy className="h-3.5 w-3.5 sm:mr-1" />
+          <span className="hidden sm:inline">Duplicar</span>
+        </Button>
+      )}
+      {onConfirm && d.status !== "realizada" && (
         <Button
           variant="outline"
           size="sm"
@@ -1023,16 +1034,18 @@ function RowActions({
           <CheckCircle2 className="h-3.5 w-3.5" />
         </Button>
       )}
-      <Button
-        variant="outline"
-        size="sm"
-        className="h-8 px-2 text-destructive border-destructive/30 hover:bg-destructive/10"
-        onClick={onDelete}
-        title="Excluir"
-      >
-        <Trash2 className="h-3.5 w-3.5 sm:mr-1" />
-        <span className="hidden sm:inline">Excluir</span>
-      </Button>
+      {onDelete && (
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-8 px-2 text-destructive border-destructive/30 hover:bg-destructive/10"
+          onClick={onDelete}
+          title="Excluir"
+        >
+          <Trash2 className="h-3.5 w-3.5 sm:mr-1" />
+          <span className="hidden sm:inline">Excluir</span>
+        </Button>
+      )}
     </div>
   );
 }

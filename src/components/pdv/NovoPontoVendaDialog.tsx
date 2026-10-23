@@ -30,6 +30,7 @@ import { useCreateClientProfilesRaw, usePatchClientProfile } from "@/hooks/useCl
 import { useSalesData } from "@/hooks/useSalesData";
 import { TEAM_VENDEDORES } from "@/hooks/useMetasData";
 import { useVendorScope } from "@/hooks/useVendorScope";
+import { PermissionDeniedError, useModuleCrud, type CrudAcao } from "@/hooks/useModuleCrud";
 import {
   buildPdvSalesIndex,
   diasSemComprar,
@@ -121,6 +122,12 @@ function fromProfile(p: ClientProfile): FormState {
  */
 export function NovoPontoVendaDialog({ open, onOpenChange, profiles, editing, onVisualizar }: Props) {
   const { toast } = useToast();
+  const crud = useModuleCrud("ponto_venda", "pontos de venda");
+  const semPermissao = (acao: CrudAcao) => {
+    if (crud.pode(acao)) return false;
+    toast({ title: "Sem permissão", description: new PermissionDeniedError(acao, "pontos de venda").message, variant: "destructive" });
+    return true;
+  };
   const { user } = useAuth();
   const autor = user?.email ?? user?.id ?? "usuário do sistema";
   const createRaw = useCreateClientProfilesRaw();
@@ -201,6 +208,7 @@ export function NovoPontoVendaDialog({ open, onOpenChange, profiles, editing, on
   });
 
   const salvar = async () => {
+    if (semPermissao(editing ? "editar" : "criar")) return;
     const nome = form.nome.trim() || form.nome_fantasia.trim();
     if (!nome) {
       toast({ title: "Informe a razão social ou o nome fantasia", variant: "destructive" });
@@ -230,6 +238,7 @@ export function NovoPontoVendaDialog({ open, onOpenChange, profiles, editing, on
 
   /** Apenas classifica o cadastro existente como ponto de venda — nunca cria cliente novo. */
   const marcarComoPdv = async (p: ClientProfile, complementos?: Record<string, any>) => {
+    if (semPermissao("criar")) return; // incluir cliente existente na lista de PDV
     try {
       await patch.mutateAsync({
         id: p.id,
@@ -339,6 +348,7 @@ export function NovoPontoVendaDialog({ open, onOpenChange, profiles, editing, on
           <Label className="text-xs">Segmento</Label>
           <QuickCreateSelect
             tipo="segmento"
+            modulo="ponto_venda"
             value={form.segmento || ""}
             onChange={(v) => set("segmento", v)}
             baseOptions={SEGMENTOS}
@@ -352,6 +362,7 @@ export function NovoPontoVendaDialog({ open, onOpenChange, profiles, editing, on
           <Label className="text-xs">Classificação do PDV</Label>
           <QuickCreateSelect
             tipo="pdv_tipo"
+            modulo="ponto_venda"
             value={form.pdv_tipo || ""}
             onChange={(v) => set("pdv_tipo", v)}
             baseOptions={TIPOS_PONTO_VENDA}

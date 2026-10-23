@@ -24,6 +24,7 @@ import { cn } from "@/lib/utils";
 import { useSalesData, shortVendedorName, cleanProductName, isExcludedProduct, getLastPurchaseByClient, getFirstPurchaseByClient, getUniqueVendedores, getVendorDebugRows, getProdutosComerciaisValidos } from "@/hooks/useSalesData";
 import { useClientStatusOverride } from "@/hooks/useClientStatusOverride";
 import { useClientAliases } from "@/hooks/useClientAliases";
+import { useModuleCrud } from "@/hooks/useModuleCrud";
 import { calcularStatusCliente } from "@/lib/clientStatusRule";
 import { ProductFilterPopover } from "@/components/clientes/ProductFilterPopover";
 import { MissingProductsCell } from "@/components/clientes/MissingProductsCell";
@@ -186,6 +187,9 @@ export default function ClientesPage() {
   const today = useMemo(() => new Date(), []);
   const { overrides, setOverride } = useClientStatusOverride();
   const { excludeClient } = useClientAliases();
+  // Módulo somente de acesso: as ações seguem os módulos donos dos dados (regra aprovada).
+  const podeExcluirDasAnalises = useModuleCrud("clientes_duplicados", "clientes duplicados").podeExcluir;
+  const podeAgendarVisita = useModuleCrud("agenda_visitas", "visitas").podeCriar;
 
   const clients = useMemo(() => {
     if (!allSales || allSales.length === 0) return [];
@@ -683,7 +687,7 @@ export default function ClientesPage() {
                         <div className="flex items-start justify-between gap-2">
                           <p className="font-medium text-sm flex-1">{client.nome}</p>
                           <div className="flex items-center gap-0.5 shrink-0">
-                            <Button
+                            {podeAgendarVisita && <Button
                               size="icon"
                               variant="ghost"
                               className="h-6 w-6 text-muted-foreground hover:text-primary"
@@ -691,8 +695,8 @@ export default function ClientesPage() {
                               onClick={() => setAgendarClienteNome(client.nome)}
                             >
                               <CalendarPlus className="h-3 w-3" />
-                            </Button>
-                            <AlertDialog>
+                            </Button>}
+                            {podeExcluirDasAnalises && <AlertDialog>
                               <AlertDialogTrigger asChild>
                                 <Button
                                   size="icon"
@@ -731,7 +735,7 @@ export default function ClientesPage() {
                                 </AlertDialogAction>
                               </AlertDialogFooter>
                             </AlertDialogContent>
-                          </AlertDialog>
+                          </AlertDialog>}
                           </div>
                         </div>
                         <div className="flex items-center gap-1.5 flex-wrap">

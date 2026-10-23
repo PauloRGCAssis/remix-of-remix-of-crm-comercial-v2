@@ -1,6 +1,7 @@
 import { useCallback } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useClientScope } from "@/hooks/useClientScope";
+import { useModuleCrud } from "@/hooks/useModuleCrud";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -132,6 +133,7 @@ async function currentUserLabel(): Promise<string> {
 
 export function useCommercialActionTypes() {
   const qc = useQueryClient();
+  const { exigir } = useModuleCrud("acoes_comerciais", "tipos de ação comercial");
   const list = useQuery({
     queryKey: QK_TYPES,
     queryFn: async () => {
@@ -147,6 +149,7 @@ export function useCommercialActionTypes() {
 
   const create = useMutation({
     mutationFn: async (nome: string) => {
+      exigir("criar");
       const clean = nome.trim();
       if (!clean) throw new Error("Informe o nome do tipo");
       const { data, error } = await (supabase as any)
@@ -167,6 +170,7 @@ export function useCommercialActionTypes() {
 
   const remove = useMutation({
     mutationFn: async (id: string) => {
+      exigir("excluir");
       const { error } = await (supabase as any)
         .from("commercial_action_types")
         .delete()
@@ -202,6 +206,7 @@ export function useCommercialActionHistory(actionId?: string) {
 export function useCommercialActions() {
   const qc = useQueryClient();
   const clientScope = useClientScope();
+  const { exigir } = useModuleCrud("acoes_comerciais", "ações comerciais");
 
   const list = useQuery({
     queryKey: QK,
@@ -224,6 +229,7 @@ export function useCommercialActions() {
     mutationFn: async (
       input: CommercialActionInput & { copiadaDe?: { id: string; nome: string; cliente: string } | null },
     ) => {
+      exigir("criar"); // inclui duplicar e copiar para vários clientes
       const { copiadaDe, ...payload } = input as any;
       const autor = await currentUserLabel();
       const { data, error } = await (supabase as any)
@@ -267,6 +273,7 @@ export function useCommercialActions() {
       patch: Partial<CommercialActionInput>;
       before?: CommercialAction;
     }) => {
+      exigir("editar"); // inclui alteração de status
       const autor = await currentUserLabel();
       const { error } = await (supabase as any)
         .from("commercial_actions")
@@ -293,6 +300,7 @@ export function useCommercialActions() {
 
   const remove = useMutation({
     mutationFn: async (id: string) => {
+      exigir("excluir");
       const { error } = await (supabase as any).from("commercial_actions").delete().eq("id", id);
       if (error) throw error;
     },

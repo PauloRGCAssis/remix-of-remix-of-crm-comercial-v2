@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useVendorScope, vendorScopeKey } from "@/hooks/useVendorScope";
+import { useModuleCrud } from "@/hooks/useModuleCrud";
 import { normKey, type BonificacaoCadastro, type BonificacaoRow } from "@/lib/bonificacaoLogic";
 import { isBonificacao, type CommissionBatch, type CommissionRow } from "@/lib/commissionImport";
 
@@ -84,9 +85,12 @@ export function useBonificacaoVinculos() {
 export function useBonificacaoVinculoMutations() {
   const qc = useQueryClient();
   const invalidate = () => qc.invalidateQueries({ queryKey: ["bonificacao_vinculos"] });
+  // Vincular, marcar "sem pedido" e voltar à conciliação automática ajustam a conciliação: editar.
+  const { exigir } = useModuleCrud("bonificacoes", "vínculos de bonificação");
 
   const vincular = useMutation({
     mutationFn: async (input: { rowId: number; codigoVenda: string | null; desvinculado?: boolean }) => {
+      exigir("editar");
       const { error } = await (supabase as any).from("bonificacao_vinculos").upsert(
         {
           bonificacao_row_id: input.rowId,
@@ -103,6 +107,7 @@ export function useBonificacaoVinculoMutations() {
   /** Remove o vínculo manual e devolve a bonificação à conciliação automática. */
   const limparVinculo = useMutation({
     mutationFn: async (rowId: number) => {
+      exigir("editar");
       const { error } = await (supabase as any)
         .from("bonificacao_vinculos")
         .delete()
@@ -118,6 +123,7 @@ export function useBonificacaoVinculoMutations() {
 export function useBonificacaoMutations() {
 
   const qc = useQueryClient();
+  const { exigir } = useModuleCrud("bonificacoes", "bonificações");
   const invalidate = () => {
     qc.invalidateQueries({ queryKey: ["bonificacao_cadastro"] });
     qc.invalidateQueries({ queryKey: ["bonificacao_rows"] });
@@ -125,6 +131,7 @@ export function useBonificacaoMutations() {
 
   const salvarCadastro = useMutation({
     mutationFn: async (input: Partial<BonificacaoCadastro> & { cliente: string; produto: string }) => {
+      exigir("criar"); // usado pelo formulário "Nova bonificação"
       const payload = {
         ...input,
         cliente_key: normKey(input.cliente),
@@ -140,6 +147,7 @@ export function useBonificacaoMutations() {
 
   const excluirCadastro = useMutation({
     mutationFn: async (id: string) => {
+      exigir("excluir");
       const { error } = await (supabase as any).from("bonificacao_cadastro").update({ ativo: false }).eq("id", id);
       if (error) throw error;
     },
@@ -149,6 +157,7 @@ export function useBonificacaoMutations() {
   /** Exclui todo o controle de um cliente (todos os produtos cadastrados). */
   const excluirCliente = useMutation({
     mutationFn: async (ids: string[]) => {
+      exigir("excluir");
       if (!ids.length) return;
       const { error } = await (supabase as any).from("bonificacao_cadastro").update({ ativo: false }).in("id", ids);
       if (error) throw error;
@@ -168,6 +177,7 @@ export function useBonificacaoMutations() {
       observacoes?: string | null;
       precos?: Record<string, number>;
     }) => {
+      exigir("editar");
       const patch: Record<string, unknown> = { pct_negociacao: input.pct_negociacao };
       if (input.vendedor !== undefined) patch.vendedor = input.vendedor;
       if (input.observacoes !== undefined) patch.observacoes = input.observacoes;

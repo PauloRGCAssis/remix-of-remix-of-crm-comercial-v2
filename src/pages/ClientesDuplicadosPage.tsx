@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useSalesData } from "@/hooks/useSalesData";
 import { useClientAliases } from "@/hooks/useClientAliases";
+import { useModuleCrud } from "@/hooks/useModuleCrud";
 import { useClientProfiles } from "@/hooks/useClientProfiles";
 import {
   detectDuplicateCandidates,
@@ -69,6 +70,7 @@ export default function ClientesDuplicadosPage() {
   const qc = useQueryClient();
   const { aliases, decisions, isLoading: loadingAliases, addAlias, setDecision, removeAlias, excludedClients, restoreClient } =
     useClientAliases();
+  const { podeEditar, podeExcluir } = useModuleCrud("clientes_duplicados", "clientes duplicados");
   const [busca, setBusca] = useState("");
   const [pendingUnify, setPendingUnify] = useState<{ candidate: DuplicateCandidate; canonical: string } | null>(null);
   const [wizardOpen, setWizardOpen] = useState(false);
@@ -402,9 +404,11 @@ export default function ClientesDuplicadosPage() {
             >
               <RefreshCcw className="h-3 w-3" /> Reprocessar aliases e vendas
             </Button>
-            <Button onClick={startWizard} size="sm" variant="outline">
-              <Wand2 className="h-3 w-3" /> Revisar um por um
-            </Button>
+            {podeEditar && (
+              <Button onClick={startWizard} size="sm" variant="outline">
+                <Wand2 className="h-3 w-3" /> Revisar um por um
+              </Button>
+            )}
           </div>
         </div>
 
@@ -475,6 +479,7 @@ export default function ClientesDuplicadosPage() {
               </div>
               {selected.size > 0 && (
                 <>
+                  {podeEditar && <>
                   <Button
                     size="sm"
                     onClick={() => openBulkConfirm("group")}
@@ -493,6 +498,7 @@ export default function ClientesDuplicadosPage() {
                     <SplitSquareHorizontal className="h-3 w-3" />
                     Separar selecionados ({selectedCandidates.length})
                   </Button>
+                  </>}
                   <Button size="sm" variant="ghost" onClick={clearSelection}>
                     Limpar seleção
                   </Button>
@@ -576,7 +582,7 @@ export default function ClientesDuplicadosPage() {
                             </div>
                           </TableCell>
                           <TableCell className="text-right">
-                            <div className="flex gap-1 justify-end flex-wrap">
+                            {podeEditar && <div className="flex gap-1 justify-end flex-wrap">
                               <Button size="sm" variant="default" onClick={() => openUnify(c)}>
                                 <Merge className="h-3 w-3" /> Agrupar
                               </Button>
@@ -586,7 +592,7 @@ export default function ClientesDuplicadosPage() {
                               <Button size="sm" variant="ghost" onClick={() => askLater(c)}>
                                 <Clock className="h-3 w-3" /> Depois
                               </Button>
-                            </div>
+                            </div>}
                           </TableCell>
                         </TableRow>
                       );
@@ -655,14 +661,14 @@ export default function ClientesDuplicadosPage() {
                                 </div>
                               </TableCell>
                               <TableCell className="text-right">
-                                <div className="flex gap-1 justify-end flex-wrap">
+                                {podeEditar && <div className="flex gap-1 justify-end flex-wrap">
                                   <Button size="sm" variant="outline" onClick={() => keepSeparate(c)}>
                                     <X className="h-3 w-3" /> Confirmar separados
                                   </Button>
                                   <Button size="sm" variant="ghost" onClick={() => openUnify(c)}>
                                     <Merge className="h-3 w-3" /> Forçar agrupamento
                                   </Button>
-                                </div>
+                                </div>}
                               </TableCell>
                             </TableRow>
                           );
@@ -716,17 +722,20 @@ export default function ClientesDuplicadosPage() {
                             <TableCell>{a.alias_name}</TableCell>
                             <TableCell className="text-xs text-muted-foreground">{a.motivo ?? "—"}</TableCell>
                             <TableCell className="text-right">
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() =>
-                                  removeAlias.mutate(a.id, {
-                                    onSuccess: () => toast.success("Alias removido."),
-                                  })
-                                }
-                              >
-                                <X className="h-3 w-3" /> Remover
-                              </Button>
+                              {podeExcluir && (
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() =>
+                                    removeAlias.mutate(a.id, {
+                                      onSuccess: () => toast.success("Alias removido."),
+                                      onError: (e: unknown) => toast.error("Erro: " + (e instanceof Error ? e.message : String(e))),
+                                    })
+                                  }
+                                >
+                                  <X className="h-3 w-3" /> Remover
+                                </Button>
+                              )}
                             </TableCell>
                           </TableRow>
                         ))}
@@ -761,17 +770,20 @@ export default function ClientesDuplicadosPage() {
                           <TableCell className="font-medium">{a.alias_name}</TableCell>
                           <TableCell className="text-xs text-muted-foreground">{a.motivo ?? "—"}</TableCell>
                           <TableCell className="text-right">
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() =>
-                                restoreClient.mutate(a.alias_name, {
-                                  onSuccess: () => toast.success(`"${a.alias_name}" restaurado.`),
-                                })
-                              }
-                            >
-                              <RefreshCcw className="h-3 w-3" /> Restaurar
-                            </Button>
+                            {podeEditar && (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() =>
+                                  restoreClient.mutate(a.alias_name, {
+                                    onSuccess: () => toast.success(`"${a.alias_name}" restaurado.`),
+                                    onError: (e: unknown) => toast.error("Erro: " + (e instanceof Error ? e.message : String(e))),
+                                  })
+                                }
+                              >
+                                <RefreshCcw className="h-3 w-3" /> Restaurar
+                              </Button>
+                            )}
                           </TableCell>
                         </TableRow>
                       ))}

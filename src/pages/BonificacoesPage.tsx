@@ -31,6 +31,7 @@ import {
   useBonificacaoVinculos,
 
 } from "@/hooks/useBonificacoes";
+import { useModuleCrud } from "@/hooks/useModuleCrud";
 import { STATUS_META, isBonificacaoPreco, normKey, ultimosMeses } from "@/lib/bonificacaoLogic";
 import { montarLinhasClientes, type LinhaClienteBonificacao } from "@/lib/bonificacaoCruzamento";
 import { BonificacaoFormDialog } from "@/components/bonificacoes/BonificacaoFormDialog";
@@ -56,6 +57,7 @@ export default function BonificacoesPage() {
   const { data: bonifRows = [], isLoading: loadingRows } = useBonificacaoRows();
   const { data: categoriasBase = [] } = useBonificacaoCategorias();
   const { excluirCliente, invalidate } = useBonificacaoMutations();
+  const { podeCriar, podeEditar, podeExcluir } = useModuleCrud("bonificacoes", "bonificações");
   const { data: vinculos } = useBonificacaoVinculos();
 
 
@@ -167,14 +169,16 @@ export default function BonificacoesPage() {
               entregues. A % de negociação é sempre sobre o volume comprado.
             </p>
           </div>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={() => setImportOpen(true)}>
-              <Upload className="h-4 w-4 mr-2" /> Importar bonificações
-            </Button>
-            <PodeCriar modulo={'bonificacoes'}><Button onClick={() => setNovoOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" /> Nova bonificação
-            </Button></PodeCriar>
-          </div>
+          {podeCriar && (
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setImportOpen(true)}>
+                <Upload className="h-4 w-4 mr-2" /> Importar bonificações
+              </Button>
+              <PodeCriar modulo={'bonificacoes'}><Button onClick={() => setNovoOpen(true)}>
+                <Plus className="h-4 w-4 mr-2" /> Nova bonificação
+              </Button></PodeCriar>
+            </div>
+          )}
         </div>
 
         <div className="grid gap-3 grid-cols-2 lg:grid-cols-7">
@@ -315,25 +319,37 @@ export default function BonificacoesPage() {
                             {l.vendedor ?? "—"} · {l.produtos.length} produto(s)
                           </div>
                           <div className="mt-1 flex flex-wrap items-center gap-x-1 text-xs">
-                            <AcaoLink onClick={() => setEditando(l)}>Editar</AcaoLink>
-                            <span className="text-muted-foreground">·</span>
+                            {podeEditar && (
+                              <>
+                                <AcaoLink onClick={() => setEditando(l)}>Editar</AcaoLink>
+                                <span className="text-muted-foreground">·</span>
+                              </>
+                            )}
                             <AcaoLink onClick={() => setConferencia(l)}>Detalhes</AcaoLink>
                             <span className="text-muted-foreground">·</span>
                             <AcaoLink onClick={() => abrirDetalhe(l, "entregue")}>Entregas</AcaoLink>
-                            <span className="text-muted-foreground">·</span>
-                            <AcaoLink className="text-destructive" onClick={() => setExcluir(l)}>
-                              Excluir
-                            </AcaoLink>
+                            {podeExcluir && (
+                              <>
+                                <span className="text-muted-foreground">·</span>
+                                <AcaoLink className="text-destructive" onClick={() => setExcluir(l)}>
+                                  Excluir
+                                </AcaoLink>
+                              </>
+                            )}
                           </div>
                         </TableCell>
                         <TableCell className="text-right align-top">
-                          <button
-                            type="button"
-                            onClick={() => setEditando(l)}
-                            className="font-semibold underline decoration-dotted underline-offset-4 hover:text-primary"
-                          >
-                            {l.pct}%
-                          </button>
+                          {podeEditar ? (
+                            <button
+                              type="button"
+                              onClick={() => setEditando(l)}
+                              className="font-semibold underline decoration-dotted underline-offset-4 hover:text-primary"
+                            >
+                              {l.pct}%
+                            </button>
+                          ) : (
+                            <span className="font-semibold">{l.pct}%</span>
+                          )}
                           <div className="text-[11px] text-muted-foreground">
                             {l.pctManual ? "definida" : l.pctSugerido != null ? "estimada" : "sem histórico"}
                           </div>

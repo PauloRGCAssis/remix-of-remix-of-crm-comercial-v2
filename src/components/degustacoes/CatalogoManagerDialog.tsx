@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Plus, Pencil, Trash2, Check, X } from "lucide-react";
 import { CatalogoItem } from "@/hooks/useDegustacaoCatalogos";
+import { useModuleCrud } from "@/hooks/useModuleCrud";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,6 +32,7 @@ export function CatalogoManagerDialog({ open, onOpenChange, title, items, onCrea
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingValue, setEditingValue] = useState("");
   const [removeTarget, setRemoveTarget] = useState<CatalogoItem | null>(null);
+  const { podeCriar, podeEditar, podeExcluir } = useModuleCrud("degustacoes", "catálogos de degustação");
 
   const handleAdd = async () => {
     if (!novo.trim()) return;
@@ -56,7 +58,7 @@ export function CatalogoManagerDialog({ open, onOpenChange, title, items, onCrea
             <DialogTitle className="font-heading">{title}</DialogTitle>
           </DialogHeader>
           <div className="space-y-3 py-2">
-            <div className="flex gap-2">
+            {podeCriar && <div className="flex gap-2">
               <Input
                 value={novo}
                 onChange={(e) => setNovo(e.target.value)}
@@ -66,7 +68,7 @@ export function CatalogoManagerDialog({ open, onOpenChange, title, items, onCrea
               <Button onClick={handleAdd} disabled={!novo.trim()}>
                 <Plus className="h-4 w-4" />
               </Button>
-            </div>
+            </div>}
             <div className="border rounded-md divide-y max-h-[55vh] overflow-y-auto">
               {items.length === 0 && (
                 <p className="p-3 text-sm text-muted-foreground text-center">Nenhum item cadastrado</p>
@@ -88,10 +90,12 @@ export function CatalogoManagerDialog({ open, onOpenChange, title, items, onCrea
                   ) : (
                     <>
                       <span className="flex-1 text-sm">{it.nome}</span>
-                      <Button size="icon" variant="ghost" onClick={() => startEdit(it)}><Pencil className="h-4 w-4" /></Button>
-                      <Button size="icon" variant="ghost" onClick={() => setRemoveTarget(it)}>
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
+                      {podeEditar && <Button size="icon" variant="ghost" onClick={() => startEdit(it)}><Pencil className="h-4 w-4" /></Button>}
+                      {podeExcluir && (
+                        <Button size="icon" variant="ghost" onClick={() => setRemoveTarget(it)}>
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      )}
                     </>
                   )}
                 </div>

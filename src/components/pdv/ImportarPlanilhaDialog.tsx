@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { FileSpreadsheet, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePermissions } from "@/hooks/usePermissions";
 import { formatDuration } from "@/lib/pdvImport";
 import {
   runSalesImport,
@@ -34,6 +35,7 @@ interface Props {
 export function ImportarPlanilhaDialog({ open, onOpenChange, profiles }: Props) {
   const { toast } = useToast();
   const { user } = useAuth();
+  const { can } = usePermissions();
   const qc = useQueryClient();
   const fileRef = useRef<HTMLInputElement>(null);
   const [importing, setImporting] = useState(false);
@@ -41,6 +43,11 @@ export function ImportarPlanilhaDialog({ open, onOpenChange, profiles }: Props) 
   const [report, setReport] = useState<SalesImportReport | null>(null);
 
   const importar = async (files: File[]) => {
+    // Mesma permissão exigida pela função import-sales no servidor.
+    if (!can("especial.importar_dados")) {
+      toast({ title: "Sem permissão", description: "Sem permissão para importar dados.", variant: "destructive" });
+      return;
+    }
     setImporting(true);
     setReport(null);
     try {

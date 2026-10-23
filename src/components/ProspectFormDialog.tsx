@@ -454,6 +454,7 @@ export function ProspectFormDialog({ open, onOpenChange, prospect, onSave, visit
             <Label>Segmento</Label>
             <QuickCreateSelect
               tipo="segmento"
+              modulo="prospeccao"
               value={form.segmento}
               onChange={(v) => set('segmento', v)}
               baseOptions={SEGMENTOS}
@@ -482,6 +483,7 @@ export function ProspectFormDialog({ open, onOpenChange, prospect, onSave, visit
             <Label>Indicado por</Label>
             <QuickCreateSelect
               tipo="indicado"
+              modulo="prospeccao"
               value={form.agendadoPor}
               onChange={(v) => set('agendadoPor', v)}
               baseOptions={indicadoPorOptions}

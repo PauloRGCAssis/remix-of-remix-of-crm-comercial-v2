@@ -1,6 +1,7 @@
 import { useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useClientScope } from "@/hooks/useClientScope";
+import { useModuleCrud } from "@/hooks/useModuleCrud";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { normalizePromotoras, type PromotoraItem } from "@/lib/degustacaoPromotoras";
@@ -55,6 +56,7 @@ function normalize(row: any): Degustacao {
 export function useDegustacoes() {
   const qc = useQueryClient();
   const clientScope = useClientScope();
+  const { exigir } = useModuleCrud("degustacoes", "degustações");
 
   const list = useQuery({
     queryKey: QK,
@@ -75,6 +77,7 @@ export function useDegustacoes() {
 
   const create = useMutation({
     mutationFn: async (input: DegustacaoInput) => {
+      exigir("criar");
       const { data, error } = await supabase
         .from("degustacoes")
         .insert(input as any)
@@ -92,6 +95,7 @@ export function useDegustacoes() {
 
   const update = useMutation({
     mutationFn: async ({ id, patch }: { id: string; patch: Partial<DegustacaoInput> }) => {
+      exigir("editar"); // inclui status e confirmação
       const { error } = await supabase.from("degustacoes").update(patch as any).eq("id", id);
       if (error) throw error;
     },
@@ -104,6 +108,7 @@ export function useDegustacoes() {
 
   const remove = useMutation({
     mutationFn: async (id: string) => {
+      exigir("excluir");
       const { error } = await supabase.from("degustacoes").delete().eq("id", id);
       if (error) throw error;
     },
@@ -116,6 +121,7 @@ export function useDegustacoes() {
 
   const bulkInsert = useMutation({
     mutationFn: async (rows: DegustacaoInput[]) => {
+      exigir("criar"); // duplicação em lote
       if (!rows.length) return [] as Degustacao[];
       const { data, error } = await supabase.from("degustacoes").insert(rows as any).select();
       if (error) throw error;
@@ -130,6 +136,7 @@ export function useDegustacoes() {
 
   const bulkUpdateStatus = useMutation({
     mutationFn: async ({ ids, status }: { ids: string[]; status: DegustacaoStatus }) => {
+      exigir("editar");
       if (!ids.length) return 0;
       const { error } = await supabase.from("degustacoes").update({ status }).in("id", ids);
       if (error) throw error;

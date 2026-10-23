@@ -33,6 +33,7 @@ import { metricsForPeriod, salesForCliente } from "@/lib/acaoResultado";
 import { CATALOGO_PRODUTOS, produtoSearchText } from "@/types/crm";
 import { ProdutoCheckList } from "@/components/produtos/ProdutoCheckList";
 import { useActiveVendorNames } from "@/hooks/useVendors";
+import { useModuleCrud } from "@/hooks/useModuleCrud";
 import { getClientDisplayName } from "@/lib/clientDisplayName";
 import {
   ACAO_STATUS,
@@ -218,6 +219,7 @@ const kgFmt = (v: number) => `${v.toLocaleString("pt-BR", { maximumFractionDigit
 export function AcaoComercialDialog({ open, onOpenChange, action, mode, defaultClient }: Props) {
   const { list: acoesList, create, update } = useCommercialActions();
   const types = useCommercialActionTypes();
+  const crud = useModuleCrud("acoes_comerciais", "tipos de ação comercial");
   const vendedores = useActiveVendorNames();
   const [form, setForm] = useState<FormState>(EMPTY);
   const [confirmDup, setConfirmDup] = useState(false);
@@ -484,11 +486,12 @@ export function AcaoComercialDialog({ open, onOpenChange, action, mode, defaultC
                 options={(types.list.data ?? []).map((t) => ({
                   value: t.nome,
                   label: t.nome,
-                  removable: true,
+                  removable: crud.podeExcluir,
                   onRemove: () => types.remove.mutateAsync(t.id),
                 }))}
                 placeholder="Selecione o tipo"
                 createLabel="Cadastrar novo tipo"
+                podeCriar={crud.podeCriar}
                 onCreate={async (nome) => {
                   const created = await types.create.mutateAsync(nome);
                   return created.nome;

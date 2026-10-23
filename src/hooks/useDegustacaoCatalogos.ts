@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useModuleCrud } from "@/hooks/useModuleCrud";
 
 export interface CatalogoItem {
   id: string;
@@ -12,6 +13,8 @@ type TableName = "degustacao_materiais" | "degustacao_equipamentos";
 function useCatalogo(table: TableName, labelSingular: string) {
   const qc = useQueryClient();
   const QK = [table] as const;
+  // Catálogos do formulário de degustação seguem as permissões do módulo.
+  const { exigir } = useModuleCrud("degustacoes", "catálogos de degustação");
 
   const list = useQuery({
     queryKey: QK,
@@ -27,6 +30,7 @@ function useCatalogo(table: TableName, labelSingular: string) {
 
   const create = useMutation({
     mutationFn: async (nome: string) => {
+      exigir("criar");
       const trimmed = nome.trim();
       if (!trimmed) throw new Error("Informe um nome");
       const { data, error } = await supabase
@@ -49,6 +53,7 @@ function useCatalogo(table: TableName, labelSingular: string) {
 
   const update = useMutation({
     mutationFn: async ({ id, nome }: { id: string; nome: string }) => {
+      exigir("editar");
       const { error } = await supabase
         .from(table as any)
         .update({ nome: nome.trim() } as any)
@@ -67,6 +72,7 @@ function useCatalogo(table: TableName, labelSingular: string) {
 
   const remove = useMutation({
     mutationFn: async (id: string) => {
+      exigir("excluir");
       const { error } = await supabase.from(table as any).delete().eq("id", id);
       if (error) throw error;
     },

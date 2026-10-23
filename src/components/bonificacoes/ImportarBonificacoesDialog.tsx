@@ -6,6 +6,7 @@ import { Loader2, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { parseCommissionFile } from "@/lib/commissionImport";
 import { commissionRowsToBonificacaoRows, persistBonificacaoRows } from "@/hooks/useBonificacoes";
+import { useModuleCrud } from "@/hooks/useModuleCrud";
 
 interface Props {
   open: boolean;
@@ -16,11 +17,13 @@ interface Props {
 export function ImportarBonificacoesDialog({ open, onOpenChange, onImported }: Props) {
   const [files, setFiles] = useState<File[]>([]);
   const [loading, setLoading] = useState(false);
+  const { exigir } = useModuleCrud("bonificacoes", "bonificações");
 
   async function handleImport() {
     if (files.length === 0) return;
     setLoading(true);
     try {
+      exigir("criar");
       let total = 0;
       for (const file of files) {
         const parsed = await parseCommissionFile(file);

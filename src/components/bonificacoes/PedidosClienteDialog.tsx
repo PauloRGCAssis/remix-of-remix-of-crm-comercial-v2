@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Link2, Unlink } from "lucide-react";
 import { useBonificacaoVinculoMutations } from "@/hooks/useBonificacoes";
+import { useModuleCrud } from "@/hooks/useModuleCrud";
 import { toast } from "@/hooks/use-toast";
 import type { EntregaDetalhe, LinhaClienteBonificacao, VinculoOrigem } from "@/lib/bonificacaoCruzamento";
 
@@ -38,6 +39,7 @@ export function PedidosClienteDialog({
   onOpenChange: (open: boolean) => void;
 }) {
   const { vincular, limparVinculo } = useBonificacaoVinculoMutations();
+  const { podeEditar } = useModuleCrud("bonificacoes", "vínculos de bonificação");
 
   const pedidosDeCompra = (linha?.pedidos ?? []).filter((p) => !p.semCompra && p.codigo);
 
@@ -62,7 +64,7 @@ export function PedidosClienteDialog({
     }
   };
 
-  const MenuVinculo = ({ entrega }: { entrega: EntregaDetalhe }) => (
+  const MenuVinculo = ({ entrega }: { entrega: EntregaDetalhe }) => !podeEditar ? null : (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="sm" className="h-6 gap-1 px-2 text-[11px]">

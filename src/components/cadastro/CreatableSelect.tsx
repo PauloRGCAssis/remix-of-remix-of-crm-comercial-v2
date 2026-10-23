@@ -21,6 +21,8 @@ interface Props {
   createLabel?: string;
   onCreate: (name: string) => Promise<string | void>;
   disabled?: boolean;
+  /** Exibe a opção "Cadastrar novo" (padrão: true). */
+  podeCriar?: boolean;
 }
 
 function norm(v: string) {
@@ -35,6 +37,7 @@ export function CreatableSelect({
   createLabel = "Cadastrar novo",
   onCreate,
   disabled,
+  podeCriar = true,
 }: Props) {
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
@@ -51,7 +54,7 @@ export function CreatableSelect({
     () => options.some((o) => norm(o.label) === norm(search)),
     [options, search],
   );
-  const canCreate = search.trim().length > 0 && !exactExists;
+  const canCreate = podeCriar && search.trim().length > 0 && !exactExists;
 
   const handleCreate = async () => {
     if (!canCreate || creating) return;

@@ -36,6 +36,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { savePdfDoc, preopenPdfTab } from "@/lib/pdfDownload";
 import { useClientProfiles, useDeleteClientProfile } from "@/hooks/useClientProfiles";
+import { useModuleCrud } from "@/hooks/useModuleCrud";
 import { ClientProfileDialog } from "@/components/cadastro/ClientProfileDialog";
 import { ClientProfileViewer } from "@/components/cadastro/ClientProfileViewer";
 import { useSalesData, getUniqueVendedores, shortVendedorName } from "@/hooks/useSalesData";
@@ -75,6 +76,7 @@ export default function CadastroClientesPage() {
   const { data: profiles = [], isLoading } = useClientProfiles();
   const { data: sales = [] } = useSalesData();
   const deleteMut = useDeleteClientProfile();
+  const { podeCriar, podeExcluir } = useModuleCrud("cadastro_clientes", "fichas de clientes");
   const { toast } = useToast();
 
   const [search, setSearch] = useState("");
@@ -274,9 +276,11 @@ export default function CadastroClientesPage() {
               Fichas completas de cadastro com endereço, contatos e produtos negociados.
             </p>
           </div>
-          <PodeCriar modulo={'cadastro_clientes'}><Button onClick={handleNew}>
-            <Plus className="h-4 w-4 mr-1" /> Nova ficha
-          </Button></PodeCriar>
+          {podeCriar && (
+            <PodeCriar modulo={'cadastro_clientes'}><Button onClick={handleNew}>
+              <Plus className="h-4 w-4 mr-1" /> Nova ficha
+            </Button></PodeCriar>
+          )}
         </div>
 
         <Card>
@@ -355,14 +359,16 @@ export default function CadastroClientesPage() {
               <Button size="sm" variant="outline" onClick={exportSelectedCsv}>
                 <Download className="h-3 w-3 mr-1" /> Exportar CSV
               </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                className="text-destructive hover:text-destructive"
-                onClick={() => setBulkDeleteOpen(true)}
-              >
-                <Trash2 className="h-3 w-3 mr-1" /> Excluir selecionados
-              </Button>
+              {podeExcluir && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="text-destructive hover:text-destructive"
+                  onClick={() => setBulkDeleteOpen(true)}
+                >
+                  <Trash2 className="h-3 w-3 mr-1" /> Excluir selecionados
+                </Button>
+              )}
               <Button size="sm" variant="ghost" onClick={() => setSelectedIds([])}>
                 <X className="h-3 w-3 mr-1" /> Limpar seleção
               </Button>
@@ -379,9 +385,11 @@ export default function CadastroClientesPage() {
             ) : filtered.length === 0 ? (
               <div className="py-16 text-center">
                 <p className="text-sm text-muted-foreground">Nenhuma ficha cadastrada com os filtros atuais.</p>
-                <Button variant="outline" className="mt-3" onClick={handleNew}>
-                  <Plus className="h-3 w-3 mr-1" /> Criar primeira ficha
-                </Button>
+                {podeCriar && (
+                  <Button variant="outline" className="mt-3" onClick={handleNew}>
+                    <Plus className="h-3 w-3 mr-1" /> Criar primeira ficha
+                  </Button>
+                )}
               </div>
             ) : (
               <div className="overflow-x-auto">
@@ -454,13 +462,15 @@ export default function CadastroClientesPage() {
                               >
                                 <Eye className="h-4 w-4" />
                               </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={(e) => { e.stopPropagation(); setDeleteTarget(p); }}
-                              >
-                                <Trash2 className="h-4 w-4 text-destructive" />
-                              </Button>
+                              {podeExcluir && (
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={(e) => { e.stopPropagation(); setDeleteTarget(p); }}
+                                >
+                                  <Trash2 className="h-4 w-4 text-destructive" />
+                                </Button>
+                              )}
                             </div>
                           </TableCell>
                         </TableRow>
