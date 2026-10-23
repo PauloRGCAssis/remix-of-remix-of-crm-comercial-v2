@@ -145,9 +145,52 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    // O service_role ignora a RLS. Validar o usuário e a permissão antes de acessar os dados.
+    const authHeader = req.headers.get("Authorization") ?? "";
+    const jwt = authHeader.match(/^Bearer\s+(.+)$/i)?.[1]?.trim();
+    if (!jwt) return makeResponse({ error: "Autenticação obrigatória." }, 401);
+
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (!supabaseUrl || !supabaseKey) {
+      return makeResponse({ error: "Serviço indisponível." }, 500);
+    }
+    const supabase = createClient(supabaseUrl, supabaseKey, { auth: { persistSession: false } });
+    const { data: userData, error: userError } = await supabase.auth.getUser(jwt);
+    const userId = userData.user?.id;
+    if (userError || !userId) return makeResponse({ error: "Sessão inválida." }, 401);
+
+    const { data: access, error: accessError } = await supabase
+      .from("user_access").select("ativo, profile_id").eq("user_id", userId).maybeSingle();
+    if (accessError) return makeResponse({ error: "Falha ao validar acesso." }, 503);
+    if (access?.ativo !== true) return makeResponse({ error: "Acesso não autorizado." }, 403);
+
+    const [rolesResult, overrideResult] = await Promise.all([
+      supabase.from("user_roles").select("role").eq("user_id", userId),
+      supabase.from("user_permissions")
+        .select("permitido").eq("user_id", userId)
+        .eq("modulo", "especial.importar_dados").eq("acao", "acessar").maybeSingle(),
+    ]);
+    if (rolesResult.error || overrideResult.error) {
+      return makeResponse({ error: "Falha ao validar permissões." }, 503);
+    }
+
+    let autorizado = (rolesResult.data ?? []).some((role) => role.role === "admin");
+    if (!autorizado) {
+      // As exceções individuais prevalecem sobre o perfil.
+      let permitido = overrideResult.data?.permitido;
+      if (permitido == null && access.profile_id) {
+        const profileResult = await supabase.from("profile_permissions")
+          .select("permitido").eq("profile_id", access.profile_id)
+          .eq("modulo", "especial.importar_dados").eq("acao", "acessar").maybeSingle();
+        if (profileResult.error) {
+          return makeResponse({ error: "Falha ao validar permissões." }, 503);
+        }
+        permitido = profileResult.data?.permitido;
+      }
+      autorizado = permitido === true;
+    }
+    if (!autorizado) return makeResponse({ error: "Sem permissão para importar dados." }, 403);
 
     const body = await req.json();
     const mode: "preview" | "chunk" = body?.mode === "preview" ? "preview" : "chunk";
