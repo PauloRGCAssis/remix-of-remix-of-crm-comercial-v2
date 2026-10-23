@@ -32,8 +32,8 @@ export default function PrimeiroAcessoPage() {
         options: { shouldCreateUser: false },
       });
       if (error) throw error;
-      setCodeSent(true);
       toast.info('Se o cadastro permitir, você receberá um código por e-mail.');
+
 
     } catch {
       toast.error('Não foi possível solicitar o código. Tente novamente.');
