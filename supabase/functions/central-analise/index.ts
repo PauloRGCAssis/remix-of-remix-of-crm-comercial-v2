@@ -255,18 +255,18 @@ Deno.serve(async (req) => {
       { headers: adminHeaders },
     );
     const roles: Array<{ role: string }> = rolesRes.ok ? await rolesRes.json() : [];
-    let autorizado = roles.some((r) => r.role === "admin");
-
-    if (!autorizado) {
-      const accessRes = await fetch(
-        `${supabaseUrl}/rest/v1/user_access?select=ativo,permission_profiles(nome)&user_id=eq.${userId}`,
-        { headers: adminHeaders },
-      );
-      const access = accessRes.ok ? await accessRes.json() : [];
-      const row = Array.isArray(access) ? access[0] : null;
-      const perfil = String(row?.permission_profiles?.nome ?? "").trim().toLowerCase();
-      autorizado = row?.ativo === true && (perfil === "administrador" || perfil === "gestor");
-    }
+    // Um papel admin não dispensa a obrigatoriedade de acesso ativo.
+    const accessRes = await fetch(
+      `${supabaseUrl}/rest/v1/user_access?select=ativo,permission_profiles(nome)&user_id=eq.${userId}`,
+      { headers: adminHeaders },
+    );
+    if (!accessRes.ok) return negar("Falha ao validar acesso.", 503);
+    const access = await accessRes.json();
+    const row = Array.isArray(access) ? access[0] : null;
+    if (row?.ativo !== true) return negar("Acesso não autorizado.", 403);
+    const perfil = String(row?.permission_profiles?.nome ?? "").trim().toLowerCase();
+    const autorizado = roles.some((r) => r.role === "admin")
+      || perfil === "administrador" || perfil === "gestor";
 
     if (!autorizado) {
       return negar("Recurso de IA disponível apenas para Administrador e Gestor.", 403);
