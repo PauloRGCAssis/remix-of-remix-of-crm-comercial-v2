@@ -33,7 +33,14 @@ Deno.serve(async (req) => {
     const callerId = userData.user?.id;
     if (!callerId) return json({ error: "Sessão inválida" }, 401);
 
-    const { data: isAdmin } = await admin.rpc("has_role", { _user_id: callerId, _role: "admin" });
+    // Mesmo administradores devem possuir cadastro de acesso ativo.
+    const { data: access, error: accessError } = await admin.from("user_access")
+      .select("ativo").eq("user_id", callerId).maybeSingle();
+    if (accessError) return json({ error: "Falha ao validar autorização" }, 503);
+    if (access?.ativo !== true) return json({ error: "Acesso desativado" }, 403);
+
+    const { data: isAdmin, error: roleError } = await admin.rpc("has_role", { _user_id: callerId, _role: "admin" });
+    if (roleError) return json({ error: "Falha ao validar autorização" }, 503);
     if (isAdmin !== true) return json({ error: "Apenas administradores" }, 403);
 
     const body = await req.json().catch(() => ({}));
