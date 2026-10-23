@@ -61,12 +61,15 @@ export default function AuthPage() {
 
   async function handleGoogle() {
     setBusy(true);
-    const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin,
-    });
-    if (result.error) {
+    try {
+      const result = await lovable.auth.signInWithOAuth("google", {
+        redirect_uri: window.location.origin,
+      });
+      if (result.error) toast.error(result.error.message ?? "Erro ao entrar com Google");
+    } catch {
+      toast.error("Não foi possível entrar com Google. Tente novamente.");
+    } finally {
       setBusy(false);
-      toast.error(result.error.message ?? "Erro ao entrar com Google");
     }
   }
 
@@ -81,6 +84,9 @@ export default function AuthPage() {
           <CardDescription>Entre com seu e-mail e senha para acessar o sistema</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          {(location.state as { authorizationMessage?: string } | null)?.authorizationMessage && (
+            <p role="alert">{(location.state as { authorizationMessage: string }).authorizationMessage}</p>
+          )}
           <form onSubmit={handleEmailLogin} className="space-y-3">
             <div className="space-y-1">
               <Label htmlFor="email">E-mail</Label>

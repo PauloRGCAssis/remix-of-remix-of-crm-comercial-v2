@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole, normalizeVendorName, sameVendor } from "@/hooks/useUserRole";
 import { type PermissionAction } from "@/lib/modulesCatalog";
+import { useAuth } from "@/contexts/AuthContext";
 
 export type DataScope = "meus_dados" | "vendedores_selecionados" | "empresa";
 
@@ -53,10 +54,11 @@ export interface PermissionsState {
  * (`tem_permissao` / `pode_ver_vendedor`), então a tela é apenas a 1ª camada.
  */
 export function usePermissions(): PermissionsState {
+  const { authorizationVersion } = useAuth();
   const { userId, isGestor, vendedor, vendedores, verified, loading: roleLoading } = useUserRole();
 
   const query = useQuery({
-    queryKey: ["user-permissions", userId],
+    queryKey: ["user-permissions", userId, authorizationVersion],
     enabled: !!userId,
     queryFn: async () => {
       const [accessRes, userPermsRes] = await Promise.all([

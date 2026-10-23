@@ -33,6 +33,7 @@ import NovaSenhaPage from "./pages/NovaSenhaPage";
 import PrimeiroAcessoPage from "./pages/PrimeiroAcessoPage";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { GoogleAccessGate } from "@/components/GoogleAccessGate";
 import { AppErrorBoundary } from "@/components/AppErrorBoundary";
 
 
@@ -76,6 +77,7 @@ const App = () => (
     <TooltipProvider>
       <BrowserRouter>
         <AuthProvider>
+          <GoogleAccessGate>
           <CrmProvider>
             <Toaster />
             <Sonner />
@@ -113,6 +115,7 @@ const App = () => (
             </Routes>
             </AppErrorBoundary>
           </CrmProvider>
+          </GoogleAccessGate>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
