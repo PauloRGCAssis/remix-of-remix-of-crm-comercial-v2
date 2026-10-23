@@ -10,6 +10,7 @@ const corsHeaders = {
 const BodySchema = z.object({
   email: z.string().trim().email().max(320).transform((value) => value.toLowerCase()),
   password: z.string().min(8).max(128),
+  token: z.string().trim().regex(/^[0-9]{6,8}$/, "Código de e-mail inválido."),
 });
 
 function json(body: unknown, status = 200) {
@@ -33,12 +34,13 @@ Deno.serve(async (request) => {
 
   const backendUrl = Deno.env.get("SUPABASE_URL");
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-  if (!backendUrl || !serviceKey) {
+  const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
+  if (!backendUrl || !serviceKey || !anonKey) {
     console.error("ativar-acesso: configuração administrativa indisponível");
     return json({ error: "Não foi possível concluir seu primeiro acesso. Contate o administrador." }, 500);
   }
 
-  const { email, password } = parsed.data;
+  const { email, password, token } = parsed.data;
   const admin = createClient(backendUrl, serviceKey, { auth: { persistSession: false } });
 
   try {
@@ -117,6 +119,17 @@ Deno.serve(async (request) => {
     if ((authData.user.email ?? "").trim().toLowerCase() !== email) {
       console.warn("ativar-acesso: recusado na etapa vinculo-email");
       return json({ ok: false, code: "EMAIL_NAO_AUTORIZADO", error: "Este e-mail não está autorizado a acessar o CRM." });
+    }
+
+    // A existência de um cadastro não comprova titularidade do e-mail.
+    // O código de uso único deve ser confirmado no Supabase Auth antes de mudar a senha.
+    const otpClient = createClient(backendUrl, anonKey, { auth: { persistSession: false } });
+    const { data: otpData, error: otpError } = await otpClient.auth.verifyOtp({
+      email, token, type: "email",
+    });
+    if (otpError || otpData.user?.id !== profile.id ||
+        (otpData.user?.email ?? "").trim().toLowerCase() !== email) {
+      return json({ error: "Código de verificação inválido ou expirado." }, 403);
     }
 
     const { error: passwordError } = await admin.auth.admin.updateUserById(profile.id, {
