@@ -19,9 +19,13 @@ export default function PrimeiroAcessoPage() {
   const [confirm, setConfirm] = useState("");
   const [busy, setBusy] = useState(false);
   const [token, setToken] = useState('');
+  const [codeSent, setCodeSent] = useState(false);
+
 
   async function sendCode() {
     setBusy(true);
+    setCodeSent(true);
+
     try {
       const { error } = await supabase.auth.signInWithOtp({
         email: email.trim().toLowerCase(),
@@ -29,6 +33,8 @@ export default function PrimeiroAcessoPage() {
       });
       if (error) throw error;
       toast.info('Se o cadastro permitir, você receberá um código por e-mail.');
+
+
     } catch {
       toast.error('Não foi possível solicitar o código. Tente novamente.');
     } finally {
@@ -108,10 +114,15 @@ export default function PrimeiroAcessoPage() {
         </CardHeader>
         <CardContent>
           <div className='space-y-2 mb-3'>
-            <Button type='button' disabled={busy || !email.trim()} onClick={sendCode}>Enviar código por e-mail</Button>
-            <Label htmlFor='pa-token'>Código recebido por e-mail</Label>
-            <Input id='pa-token' autoComplete='one-time-code' inputMode='numeric' maxLength={12} placeholder='Ex.: 123456' value={token} onChange={(event) => setToken(event.target.value.replace(/\D/g, '').slice(0, 8))} />
+            <Button type='button' className='w-full' disabled={busy || !email.trim()} onClick={sendCode}>Enviar código por e-mail</Button>
+            {codeSent && (
+              <div className='space-y-1'>
+                <Label htmlFor='pa-token'>Código recebido por e-mail</Label>
+                <Input id='pa-token' autoComplete='one-time-code' inputMode='numeric' maxLength={12} placeholder='Ex.: 123456' value={token} onChange={(event) => setToken(event.target.value.replace(/\D/g, '').slice(0, 8))} />
+              </div>
+            )}
           </div>
+
           <form onSubmit={handleSubmit} className="space-y-3">
             <div className="space-y-1">
               <Label htmlFor="pa-email">E-mail</Label>
