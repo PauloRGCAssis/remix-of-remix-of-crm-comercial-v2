@@ -30,12 +30,17 @@ export default function NovaSenhaPage() {
       return toast.error(error.message);
     }
     if (user?.id) {
-      await supabase
+      const { error: profileError } = await supabase
         .from("profiles")
-        .update({ must_change_password: false } as never)
+        .update({ must_change_password: false, senha_definida: true } as never)
         .eq("id", user.id);
+      if (profileError) {
+        setBusy(false);
+        return toast.error("Senha salva, mas não foi possível concluir o cadastro. Tente novamente.");
+      }
     }
     await qc.invalidateQueries({ queryKey: ["user-access"] });
+    await qc.invalidateQueries({ queryKey: ["admin-usuarios"] });
     setBusy(false);
     toast.success("Senha atualizada! Use a nova senha nos próximos acessos.");
     navigate("/dashboard", { replace: true });
@@ -48,9 +53,9 @@ export default function NovaSenhaPage() {
           <div className="mx-auto w-12 h-12 rounded-lg gradient-brand flex items-center justify-center shadow-brand mb-2">
             <KeyRound className="h-5 w-5 text-primary-foreground" />
           </div>
-          <CardTitle className="font-heading">Crie sua nova senha</CardTitle>
+          <CardTitle className="font-heading">Crie sua senha</CardTitle>
           <CardDescription>
-            Você está usando uma senha temporária. Defina uma senha pessoal para continuar.
+            Você entrou sem uma senha pessoal. Defina sua senha agora para usar nos próximos acessos.
           </CardDescription>
         </CardHeader>
         <CardContent>
