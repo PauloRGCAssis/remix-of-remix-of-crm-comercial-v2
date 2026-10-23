@@ -62,7 +62,7 @@ export function useUserRole(): UserAccess {
       const [profileRes, rolesRes] = await Promise.all([
         supabase
           .from("profiles")
-          .select("nome, vendedor, vendedores, must_change_password")
+          .select("nome, vendedor, vendedores, must_change_password, senha_definida")
           .eq("id", userId!)
           .abortSignal(controller.signal)
           .maybeSingle(),
@@ -76,8 +76,13 @@ export function useUserRole(): UserAccess {
             vendedor?: string | null;
             vendedores?: string[] | null;
             must_change_password?: boolean | null;
+            senha_definida?: boolean | null;
           }
         | null;
+      // Login por e-mail que entrou pelo link/código sem nunca criar senha:
+      // obriga a definir a senha agora, senão o próximo login falha.
+      const provider = (user?.app_metadata as { provider?: string } | undefined)?.provider;
+      const semSenhaPropria = profile?.senha_definida === false && (!provider || provider === "email");
       return {
         nome: profile?.nome ?? null,
         vendedor: profile?.vendedor ?? null,
@@ -86,7 +91,7 @@ export function useUserRole(): UserAccess {
           : profile?.vendedor
             ? [profile.vendedor]
             : [],
-        mustChangePassword: profile?.must_change_password === true,
+        mustChangePassword: profile?.must_change_password === true || semSenhaPropria,
         isGestor: (rolesRes.data ?? []).some((r) => r.role === "admin"),
       };
       } finally {
