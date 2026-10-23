@@ -57,8 +57,8 @@ const queryClient = new QueryClient({
 });
 
 const P = ({ children }: { children: JSX.Element }) => <ProtectedRoute>{children}</ProtectedRoute>;
-const G = ({ children }: { children: JSX.Element }) => (
-  <ProtectedRoute gestorOnly>{children}</ProtectedRoute>
+const A = ({ children }: { children: JSX.Element }) => (
+  <ProtectedRoute adminOnly>{children}</ProtectedRoute>
 );
 
 // Carrega aliases dinâmicos no boot para que normalizeClientName os use globalmente.
@@ -95,20 +95,20 @@ const App = () => (
               <Route path="/ponto-de-venda" element={<P><PontoVendaPage /></P>} />
               <Route path="/clientes-enderecos" element={<P><ClientesEnderecosPage /></P>} />
               <Route path="/clientes" element={<P><ClientesPage /></P>} />
-              <Route path="/clientes-duplicados" element={<G><ClientesDuplicadosPage /></G>} />
-              <Route path="/importar" element={<G><ImportarPage /></G>} />
-              <Route path="/vendedores" element={<G><VendedoresPage /></G>} />
+              <Route path="/clientes-duplicados" element={<P><ClientesDuplicadosPage /></P>} />
+              <Route path="/importar" element={<P><ImportarPage /></P>} />
+              <Route path="/vendedores" element={<P><VendedoresPage /></P>} />
               <Route path="/agenda" element={<P><AgendaPage /></P>} />
               <Route path="/agenda-pedidos" element={<P><AgendaPedidosPage /></P>} />
               <Route path="/estudo-vendas" element={<P><EstudoVendasPage /></P>} />
               <Route path="/metas" element={<P><MetasPage /></P>} />
-              <Route path="/pagamento-vendedores" element={<G><PagamentoVendedoresPage /></G>} />
+              <Route path="/pagamento-vendedores" element={<P><PagamentoVendedoresPage /></P>} />
               <Route path="/inteligencia" element={<P><InteligenciaComercialPage /></P>} />
               <Route path="/cadastro" element={<P><CadastroClientesPage /></P>} />
               <Route path="/degustacoes" element={<P><DegustacoesPage /></P>} />
-              <Route path="/acoes-comerciais" element={<G><AcoesComerciaisPage /></G>} />
-              <Route path="/bonificacoes" element={<G><BonificacoesPage /></G>} />
-              <Route path="/administracao" element={<G><AdministracaoPage /></G>} />
+              <Route path="/acoes-comerciais" element={<P><AcoesComerciaisPage /></P>} />
+              <Route path="/bonificacoes" element={<P><BonificacoesPage /></P>} />
+              <Route path="/administracao" element={<A><AdministracaoPage /></A>} />
               <Route path="/relatorios" element={<P><RelatoriosPage /></P>} />
 
               <Route path="*" element={<NotFound />} />

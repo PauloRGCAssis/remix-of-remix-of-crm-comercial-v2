@@ -50,18 +50,18 @@ const menuItems = [
   { title: "Cadastro de Clientes", url: "/cadastro", icon: ClipboardList },
   { title: "Clientes (Endereços)", url: "/clientes-enderecos", icon: MapPin },
   { title: "Análise de Clientes", url: "/clientes", icon: Users },
-  { title: "Clientes Duplicados", url: "/clientes-duplicados", icon: GitMerge, gestorOnly: true },
-  { title: "Vendedores", url: "/vendedores", icon: UserCheck, gestorOnly: true },
+  { title: "Clientes Duplicados", url: "/clientes-duplicados", icon: GitMerge },
+  { title: "Vendedores", url: "/vendedores", icon: UserCheck },
   { title: "Estudo de Vendas", url: "/estudo-vendas", icon: TrendingUp },
   { title: "Inteligência Comercial", url: "/inteligencia", icon: Brain },
   { title: "Metas Comerciais", url: "/metas", icon: Target },
-  { title: "Pagamento Vendedores", url: "/pagamento-vendedores", icon: DollarSign, gestorOnly: true },
+  { title: "Pagamento Vendedores", url: "/pagamento-vendedores", icon: DollarSign },
   { title: "Relatórios", url: "/relatorios", icon: FileText },
-  { title: "Ações Comerciais", url: "/acoes-comerciais", icon: Megaphone, gestorOnly: true },
-  { title: "Controle de Bonificações", url: "/bonificacoes", icon: Percent, gestorOnly: true },
+  { title: "Ações Comerciais", url: "/acoes-comerciais", icon: Megaphone },
+  { title: "Controle de Bonificações", url: "/bonificacoes", icon: Percent },
   { title: "Degustações", url: "/degustacoes", icon: Sparkles },
-  { title: "Importar Planilha", url: "/importar", icon: FileSpreadsheet, gestorOnly: true },
-  { title: "Administração", url: "/administracao", icon: ShieldCheck, gestorOnly: true, modulo: "administracao" },
+  { title: "Importar Planilha", url: "/importar", icon: FileSpreadsheet },
+  { title: "Administração", url: "/administracao", icon: ShieldCheck, adminOnly: true, modulo: "administracao" },
 ];
 
 
@@ -69,11 +69,12 @@ export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const location = useLocation();
-  const { isGestor, nome, vendedor } = useUserRole();
+  const { isGestor, isAdmin, nome, vendedor } = useUserRole();
   const { can } = usePermissions();
-  // O menu reflete as permissões efetivas do usuário (perfil + exceções).
+  // O menu reflete as mesmas regras do ProtectedRoute: permissões efetivas
+  // (perfil + exceções) e, para Administração, a role técnica `admin`.
   const visibleItems = menuItems.filter((item) => {
-    if (item.gestorOnly && !isGestor) return false;
+    if (item.adminOnly && !isAdmin) return false;
     const modulo = (item as { modulo?: string }).modulo ?? moduleKeyForRoute(item.url);
     return !modulo || can(modulo, "acessar");
   });

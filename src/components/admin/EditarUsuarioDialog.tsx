@@ -101,6 +101,10 @@ export function EditarUsuarioDialog({
   const escoposAtivos = escopos.filter((e) => e.ativo);
   const perfisVisiveis = permProfiles.filter((p) => p.ativo !== false || p.id === perfil);
   const escopoValue = scopeId ? `scope:${scopeId}` : escopo;
+  // Apenas informativo: o nome do perfil nunca concede a role administrativa.
+  const perfilAdministradorSemRole =
+    !admin &&
+    (permProfiles.find((p) => p.id === perfil)?.nome ?? "").trim().toLowerCase() === "administrador";
 
   async function salvar() {
     if (!usuario) return;
@@ -244,6 +248,12 @@ export function EditarUsuarioDialog({
             <span className="text-sm">Administrador</span>
             <Switch checked={admin} onCheckedChange={setAdmin} />
           </div>
+          {perfilAdministradorSemRole && (
+            <p role="note" className="text-xs text-muted-foreground">
+              O perfil "Administrador" não concede acesso administrativo. Para permitir acesso à
+              Administração e ao gerenciamento de usuários, ative a opção "Administrador".
+            </p>
+          )}
 
           <Button variant="outline" className="w-full" onClick={() => setPermsOpen(true)}>
             <ShieldCheck className="h-4 w-4 mr-2" />

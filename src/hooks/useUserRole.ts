@@ -17,8 +17,10 @@ export interface UserAccess {
   vendedores: string[];
   /** Está usando senha temporária e precisa definir uma senha pessoal. */
   mustChangePassword: boolean;
-  /** Gestor enxerga e edita tudo. */
+  /** Gestor enxerga e edita tudo. Legado: equivale a `isAdmin` (role técnica `admin`). */
   isGestor: boolean;
+  /** Administrador: role técnica `admin` com acesso ativo verificado. Única autoridade administrativa. */
+  isAdmin: boolean;
 }
 
 /** Normaliza nomes de vendedor para comparação (sem acento, maiúsculas). */
@@ -94,6 +96,8 @@ export function useUserRole(): UserAccess {
     },
   });
 
+  const isAdmin = !!userId && !authLoading && query.isSuccess && query.data?.isGestor === true;
+
   return {
     deniedReason: query.error instanceof AccessDeniedError ? query.error.reason : null,
     error: query.isError && !(query.error instanceof AccessDeniedError),
@@ -105,6 +109,7 @@ export function useUserRole(): UserAccess {
     vendedor: query.data?.vendedor ?? null,
     vendedores: query.data?.vendedores ?? [],
     mustChangePassword: query.data?.mustChangePassword ?? false,
-    isGestor: !!userId && !authLoading && query.isSuccess && query.data?.isGestor === true,
+    isGestor: isAdmin,
+    isAdmin,
   };
 }

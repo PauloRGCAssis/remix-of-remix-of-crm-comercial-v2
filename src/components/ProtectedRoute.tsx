@@ -27,15 +27,16 @@ function SemPermissao() {
 
 /**
  * Exige sessão ativa e valida a permissão do módulo correspondente à rota.
- * `gestorOnly` continua disponível para telas exclusivas de gestor.
+ * `adminOnly` reserva a tela ao Administrador (role técnica `admin`); perfis
+ * de permissão, mesmo chamados "Administrador", não substituem a role.
  */
 export function ProtectedRoute({
   children,
-  gestorOnly = false,
+  adminOnly = false,
   modulo,
 }: {
   children: ReactNode;
-  gestorOnly?: boolean;
+  adminOnly?: boolean;
   modulo?: string;
 }) {
   const { session, loading } = useAuth();
@@ -65,7 +66,7 @@ export function ProtectedRoute({
   if (access.loading || perms.loading) return <FullScreenLoader />;
   if (access.mustChangePassword) return <Navigate to="/nova-senha" replace />;
   if (!perms.ativo) return <SemPermissao />;
-  if (gestorOnly && !access.isGestor) return <Navigate to="/dashboard" replace />;
+  if (adminOnly && !access.isAdmin) return <Navigate to="/dashboard" replace />;
   if (!permitido) return <SemPermissao />;
 
   return <>{children}</>;

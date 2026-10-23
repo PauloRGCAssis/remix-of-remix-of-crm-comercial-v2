@@ -15,6 +15,7 @@ import { VendorsManagementTab } from "@/components/vendedores/VendorsManagementT
 import { UsuariosAcessoTab } from "@/components/vendedores/UsuariosAcessoTab";
 import { ClassificacaoClientesSettings } from "@/components/vendedores/ClassificacaoClientesSettings";
 import { usePersistentState } from "@/hooks/usePersistentState";
+import { useUserRole } from "@/hooks/useUserRole";
 
 type ChartMetric = "kg" | "faturamento";
 
@@ -136,6 +137,9 @@ export default function VendedoresPage() {
   const [chartMetric, setChartMetric] = usePersistentState<ChartMetric>("vendedores:chartMetric", "kg");
   const [selectedVendedores, setSelectedVendedores] = usePersistentState<string[]>("vendedores:selectedVendedores", []);
   const [activeTab, setActiveTab] = usePersistentState("vendedores:activeTab", "desempenho");
+  // "Usuários e acesso" altera roles administrativas: só o Administrador monta essa aba.
+  const { isAdmin } = useUserRole();
+  const currentTab = activeTab === "usuarios" && !isAdmin ? "desempenho" : activeTab;
 
   const vendedores = useMemo(() => (allSales ? getUniqueVendedores(allSales) : []), [allSales]);
   const hasComparison = hasCompleteDateRange(periodoComparativoInicio, periodoComparativoFim);
@@ -255,11 +259,11 @@ export default function VendedoresPage() {
           <p className="mt-1 text-sm text-muted-foreground">Análise de desempenho e gestão de vendedores</p>
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <Tabs value={currentTab} onValueChange={setActiveTab} className="w-full">
           <TabsList>
             <TabsTrigger value="desempenho">Desempenho</TabsTrigger>
             <TabsTrigger value="cadastro">Cadastro</TabsTrigger>
-            <TabsTrigger value="usuarios">Usuários e acesso</TabsTrigger>
+            {isAdmin && <TabsTrigger value="usuarios">Usuários e acesso</TabsTrigger>}
             <TabsTrigger value="configuracoes">Configurações</TabsTrigger>
           </TabsList>
 
@@ -267,9 +271,11 @@ export default function VendedoresPage() {
             <ClassificacaoClientesSettings />
           </TabsContent>
 
-          <TabsContent value="usuarios" className="mt-4">
-            <UsuariosAcessoTab />
-          </TabsContent>
+          {isAdmin && (
+            <TabsContent value="usuarios" className="mt-4">
+              <UsuariosAcessoTab />
+            </TabsContent>
+          )}
 
           <TabsContent value="cadastro" className="mt-4">
             <VendorsManagementTab />
