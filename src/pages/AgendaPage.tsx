@@ -1,3 +1,4 @@
+import { PodeCriar } from "@/components/PodeCriar";
 import { useState, useMemo } from "react";
 import { EscopoUsuarioBar } from "@/components/EscopoUsuarioBar";
 import { AppLayout } from "@/components/AppLayout";
@@ -193,9 +194,9 @@ export default function AgendaPage() {
             <p className="text-sm text-muted-foreground mt-1">Visitas agendadas, agrupadas por data — dê feedback direto aqui</p>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
-            <Button onClick={() => setNovaVisitaOpen(true)} className="gap-2">
+            <PodeCriar modulo={'agenda_visitas'}><Button onClick={() => setNovaVisitaOpen(true)} className="gap-2">
               <Plus className="h-4 w-4" /> Nova Visita
-            </Button>
+            </Button></PodeCriar>
             <RouteGenerator visitas={enrichedVisitas} />
           </div>
         </div>

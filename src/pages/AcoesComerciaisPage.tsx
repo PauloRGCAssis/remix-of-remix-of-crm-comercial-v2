@@ -1,3 +1,4 @@
+import { PodeCriar } from "@/components/PodeCriar";
 import { useMemo, useState } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
@@ -258,9 +259,9 @@ export default function AcoesComerciaisPage() {
               Controle das campanhas promocionais: regras, período, investimento e resultados.
             </p>
           </div>
-          <Button onClick={openCreate}>
+          <PodeCriar modulo={'acoes_comerciais'}><Button onClick={openCreate}>
             <Plus className="h-4 w-4 mr-1" /> Nova Ação
-          </Button>
+          </Button></PodeCriar>
         </div>
 
         {/* Dashboard */}

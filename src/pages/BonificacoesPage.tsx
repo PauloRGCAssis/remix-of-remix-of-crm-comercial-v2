@@ -1,3 +1,4 @@
+import { PodeCriar } from "@/components/PodeCriar";
 import { useMemo, useState } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -170,9 +171,9 @@ export default function BonificacoesPage() {
             <Button variant="outline" onClick={() => setImportOpen(true)}>
               <Upload className="h-4 w-4 mr-2" /> Importar bonificações
             </Button>
-            <Button onClick={() => setNovoOpen(true)}>
+            <PodeCriar modulo={'bonificacoes'}><Button onClick={() => setNovoOpen(true)}>
               <Plus className="h-4 w-4 mr-2" /> Nova bonificação
-            </Button>
+            </Button></PodeCriar>
           </div>
         </div>
 

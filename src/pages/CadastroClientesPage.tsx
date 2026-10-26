@@ -1,3 +1,4 @@
+import { PodeCriar } from "@/components/PodeCriar";
 import { useMemo, useState } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -273,9 +274,9 @@ export default function CadastroClientesPage() {
               Fichas completas de cadastro com endereço, contatos e produtos negociados.
             </p>
           </div>
-          <Button onClick={handleNew}>
+          <PodeCriar modulo={'cadastro_clientes'}><Button onClick={handleNew}>
             <Plus className="h-4 w-4 mr-1" /> Nova ficha
-          </Button>
+          </Button></PodeCriar>
         </div>
 
         <Card>
