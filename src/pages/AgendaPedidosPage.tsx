@@ -1,3 +1,4 @@
+import { PodeCriar } from "@/components/PodeCriar";
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { useAgendaPedidos, OrderClient } from "@/hooks/useAgendaPedidos";
@@ -687,9 +688,9 @@ export default function AgendaPedidosPage() {
             <p className="text-sm text-muted-foreground mt-1">Controle de envio de pedidos via WhatsApp por dia da semana</p>
           </div>
           <div className="flex gap-2 flex-wrap">
-            <Button size="sm" onClick={() => { setShowNewClient(true); if (diaFilter !== "todos") setNewDias([diaFilter]); }}>
+            <PodeCriar modulo={'agenda_pedidos'}><Button size="sm" onClick={() => { setShowNewClient(true); if (diaFilter !== "todos") setNewDias([diaFilter]); }}>
               <Plus className="h-4 w-4 mr-1" /> Novo Cliente
-            </Button>
+            </Button></PodeCriar>
             <Button variant="outline" size="sm" onClick={() => setShowTemplateDialog(true)}>
               <MessageCircle className="h-4 w-4 mr-1" /> Mensagem
             </Button>

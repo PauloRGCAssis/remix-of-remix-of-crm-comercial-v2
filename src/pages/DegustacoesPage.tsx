@@ -1,3 +1,4 @@
+import { PodeCriar } from "@/components/PodeCriar";
 import {
   promotorasDaDegustacao,
   promotorasLabel,
@@ -533,9 +534,9 @@ export default function DegustacoesPage() {
             <Button variant="outline" onClick={exportExcel} className="border-amber-500/40 text-amber-700 hover:bg-amber-50 dark:text-amber-300 dark:hover:bg-amber-500/10">
               <FileSpreadsheet className="h-4 w-4 mr-2" /> Exportar Excel
             </Button>
-            <Button onClick={openNew}>
+            <PodeCriar modulo={'degustacoes'}><Button onClick={openNew}>
               <Plus className="h-4 w-4 mr-2" /> Nova Degustação
-            </Button>
+            </Button></PodeCriar>
           </div>
         </div>
 

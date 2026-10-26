@@ -1,3 +1,4 @@
+import { PodeCriar } from "@/components/PodeCriar";
 import { useMemo, useState } from "react";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
@@ -451,9 +452,9 @@ export default function PontoVendaPage() {
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button onClick={() => setNovoOpen(true)}>
+            <PodeCriar modulo={'ponto_venda'}><Button onClick={() => setNovoOpen(true)}>
               <Plus className="mr-1 h-4 w-4" /> Cadastrar novo ponto de venda
-            </Button>
+            </Button></PodeCriar>
             <Button variant="outline" onClick={() => setAddOpen(true)}>
               <FileSpreadsheet className="mr-1 h-4 w-4" /> Importar planilha
             </Button>

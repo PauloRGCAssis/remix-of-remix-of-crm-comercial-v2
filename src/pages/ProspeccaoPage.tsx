@@ -1,3 +1,4 @@
+import { PodeCriar } from "@/components/PodeCriar";
 import { useState, useMemo } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { useCrm } from "@/contexts/CrmContext";
@@ -381,9 +382,9 @@ export default function ProspeccaoPage() {
               <Filter className="h-4 w-4 mr-1" /> Filtros
               {hasActiveFilters && <Badge variant="destructive" className="ml-1 h-4 px-1 text-[10px]">!</Badge>}
             </Button>
-            <Button onClick={() => { setEditingLead(null); setShowFormDialog(true); }}>
+            <PodeCriar modulo={'prospeccao'}><Button onClick={() => { setEditingLead(null); setShowFormDialog(true); }}>
               <Plus className="h-4 w-4 mr-1" /> Nova Prospecção
-            </Button>
+            </Button></PodeCriar>
           </div>
         </div>
 
