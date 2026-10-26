@@ -27,12 +27,15 @@ jobs:
           node-version: '22'
           cache: npm
       - name: Instalar dependencias
-        run: npm ci
+        run: npm install --package-lock=false --no-audit --no-fund
       - name: Executar testes Vitest
         run: npm test
+        if: success() || failure()
       - name: Executar testes de autorizacao estaticos
         run: |
           node --test scripts/permissions-security.test.mjs
           node --test scripts/admin-users-security.test.mjs
+        if: success() || failure()
       - name: Verificar build
+        if: success() || failure()
         run: npm run build
