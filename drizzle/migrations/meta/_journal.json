@@ -8,6 +8,13 @@
       "when": 1793040875297,
       "tag": "0000_on_auth_user_created",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1793041511095,
+      "tag": "0001_enforce_action_permissions",
+      "breakpoints": true
     }
   ]
 }
