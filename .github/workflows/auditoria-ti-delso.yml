@@ -1,0 +1,38 @@
+name: Auditoria de testes TI DELSO
+
+on:
+  push:
+    branches:
+      - fix/seguranca-rls-permissoes
+    paths:
+      - '.github/workflows/auditoria-ti-delso.yml'
+      - 'src/**'
+      - 'scripts/**'
+      - 'drizzle/**'
+      - 'supabase/**'
+      - 'package*.json'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  testes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Instalar dependencias
+        run: npm ci
+      - name: Executar testes Vitest
+        run: npm test
+      - name: Executar testes de autorizacao estaticos
+        run: |
+          node --test scripts/permissions-security.test.mjs
+          node --test scripts/admin-users-security.test.mjs
+      - name: Verificar build
+        run: npm run build
