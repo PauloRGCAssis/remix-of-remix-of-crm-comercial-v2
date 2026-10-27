@@ -1,21 +1,20 @@
-import React, { createContext, useContext, useState, useCallback, useEffect, useMemo, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect, useMemo, useRef, ReactNode } from 'react';
 import { useVendorScope } from '@/hooks/useVendorScope';
 import { useUserRole } from '@/hooks/useUserRole';
+import { useAuth } from '@/contexts/AuthContext';
+import { toast } from '@/hooks/use-toast';
 import { Lead, Visita, Justificativa, LeadExcluido, PipelineStatus, VisitaStatus, NegocioStatus, ProdutoNegociado, SEED_JUSTIFICATIVAS } from '@/types/crm';
 import { matchBairroRegional, addAuditLog } from '@/lib/bairroNormalization';
 import { findDuplicates, DuplicateMatch } from '@/lib/duplicateDetection';
-import { createImportedLeads } from '@/data/importedLeads';
 import { repairCrmSnapshot } from '@/lib/crmSnapshotRepair';
 import {
-  chooseReliableSnapshot,
   createCrmSnapshot,
   extractMaxIdCounterFromEntities,
-  loadIndexedSnapshot,
   loadInitialCrmSnapshot,
   saveIndexedSnapshot,
   saveLocalSnapshot,
 } from '@/lib/crmPersistence';
-import { loadCloudSnapshot, saveCloudSnapshot } from '@/lib/crmCloudSync';
+import { aplicarReconciliacao, CrmCloudSync, type EstadoSync } from '@/lib/crmCloudSync';
 
 const bootstrapSnapshot = loadInitialCrmSnapshot();
 
@@ -40,6 +39,10 @@ interface CrmContextType {
   getJustificativaById: (id: string) => Justificativa | undefined;
   addJustificativa: (titulo: string) => Justificativa;
   checkDuplicates: (nome: string, endereco?: string, excludeId?: string) => DuplicateMatch[];
+  /** Estado da gravação na nuvem (local × pendente × confirmado). */
+  sincronizacao: EstadoSync;
+  /** Reenvia pendências; se a carga inicial falhou, recarrega da nuvem. */
+  tentarSincronizarNovamente: () => void;
 }
 
 const CrmContext = createContext<CrmContextType | null>(null);
@@ -50,13 +53,13 @@ export function useCrm() {
   return ctx;
 }
 
-function createInitialLeads(): Lead[] {
-  return bootstrapSnapshot?.leads ?? createImportedLeads();
+/** Versão tolerante (null fora do provider), para indicadores globais. */
+export function useCrmSincronizacao() {
+  const ctx = useContext(CrmContext);
+  return ctx ? { estado: ctx.sincronizacao, tentarNovamente: ctx.tentarSincronizarNovamente } : null;
 }
 
-function createInitialVisitas(): Visita[] {
-  return bootstrapSnapshot?.visitas ?? [];
-}
+const ESTADO_INICIAL_SYNC: EstadoSync = { fase: 'carregando', pendentes: 0, ultimaFalha: null };
 
 function createInitialJustificativas(): Justificativa[] {
   if (bootstrapSnapshot?.justificativas?.length) {
@@ -122,11 +125,18 @@ function nextId(prefix: string) {
 }
 
 export function CrmProvider({ children }: { children: ReactNode }) {
-  const [leads, setLeads] = useState<Lead[]>(createInitialLeads);
-  const [visitas, setVisitas] = useState<Visita[]>(createInitialVisitas);
+  // Leads e visitas vêm só da nuvem do usuário logado: nunca de cache local
+  // (o navegador pode ter sido usado por outro vendedor) nem de dados fixos.
+  const [leads, setLeads] = useState<Lead[]>([]);
+  const [visitas, setVisitas] = useState<Visita[]>([]);
   const [justificativas, setJustificativas] = useState<Justificativa[]>(createInitialJustificativas);
-  const [leadsExcluidos, setLeadsExcluidos] = useState<LeadExcluido[]>(bootstrapSnapshot?.leadsExcluidos ?? []);
+  const [leadsExcluidos, setLeadsExcluidos] = useState<LeadExcluido[]>([]);
   const [isHydrating, setIsHydrating] = useState(true);
+  const [sincronizacao, setSincronizacao] = useState<EstadoSync>(ESTADO_INICIAL_SYNC);
+  const [recarga, setRecarga] = useState(0);
+  const syncRef = useRef<CrmCloudSync | null>(null);
+  const { user } = useAuth();
+  const userId = user?.id ?? null;
 
   // Keep the live entity reference in sync with current React state so
   // nextId() can compute IDs that are guaranteed unique against everything
@@ -136,49 +146,76 @@ export function CrmProvider({ children }: { children: ReactNode }) {
     _liveEntities = { leads, visitas, justificativas, leadsExcluidos };
   }, [leads, visitas, justificativas, leadsExcluidos]);
 
+  // Uma sincronização por usuário logado. Troca de usuário (ou logout)
+  // encerra a anterior: nada do usuário antigo é gravado na conta nova.
   useEffect(() => {
+    setIsHydrating(true);
+    setLeads([]);
+    setVisitas([]);
+    setLeadsExcluidos([]);
+    setSincronizacao(ESTADO_INICIAL_SYNC);
+    if (!userId) {
+      syncRef.current = null;
+      return;
+    }
+
     let cancelled = false;
+    let avisouQuedaDeRede = false;
+    const sync = new CrmCloudSync(userId, {
+      onEstado: (estado) => {
+        if (cancelled) return;
+        if (estado.fase === 'sincronizado') avisouQuedaDeRede = false;
+        setSincronizacao(estado);
+      },
+      onReconciliar: (rec) => {
+        if (cancelled) return;
+        if (rec.entidade === 'lead') setLeads(prev => aplicarReconciliacao(prev, rec));
+        else setVisitas(prev => aplicarReconciliacao(prev, rec));
+      },
+      onFalha: (falha) => {
+        if (cancelled) return;
+        // Queda de rede: um aviso por episódio, não a cada nova tentativa.
+        if (falha.tipo === 'rede') {
+          if (avisouQuedaDeRede) return;
+          avisouQuedaDeRede = true;
+        }
+        toast({ title: `Não salvo na nuvem: ${falha.nome}`, description: falha.mensagem, variant: 'destructive' });
+      },
+    });
+    syncRef.current = sync;
 
-    const hydrateFromStorage = async () => {
-      const [indexedSnapshot, cloudSnapshot] = await Promise.all([
-        loadIndexedSnapshot(),
-        loadCloudSnapshot(),
-      ]);
-
+    void sync.carregar().then((cloudSnapshot) => {
       if (cancelled) return;
-
-      // Segurança: a sessão nunca hidrata dados comerciais de caches locais,
-      // pois o navegador pode ter sido usado antes por outro vendedor.
-      const preferredSnapshot = cloudSnapshot;
-
-      if (preferredSnapshot) {
-        setLeads(preferredSnapshot.leads);
-        setVisitas(preferredSnapshot.visitas);
-        setJustificativas(preferredSnapshot.justificativas);
-        setLeadsExcluidos(preferredSnapshot.leadsExcluidos || []);
+      if (cloudSnapshot) {
+        setLeads(cloudSnapshot.leads);
+        setVisitas(cloudSnapshot.visitas);
+        // Justificativas não existem na nuvem: mantém as locais (não apaga).
+        saveLocalSnapshot({ ...cloudSnapshot, justificativas: _liveEntities.justificativas });
+        _idCounter = Math.max(_idCounter, 100, cloudSnapshot.idCounter);
+      } else {
+        toast({
+          title: 'Não foi possível carregar a Prospecção/Agenda da nuvem',
+          description: 'Alterações feitas agora não serão salvas. Use "Tentar novamente" no topo da tela.',
+          variant: 'destructive',
+        });
       }
-
-      if (preferredSnapshot) {
-        saveLocalSnapshot(preferredSnapshot);
-        void saveIndexedSnapshot(preferredSnapshot);
-      }
-
-      _idCounter = Math.max(
-        _idCounter,
-        100,
-        100,
-        cloudSnapshot?.idCounter ?? 100,
-        preferredSnapshot?.idCounter ?? 100,
-      );
-
       setIsHydrating(false);
-    };
+    });
 
-    void hydrateFromStorage();
+    const aoVoltarConexao = () => { void sync.tentarNovamente(); };
+    window.addEventListener('online', aoVoltarConexao);
 
     return () => {
       cancelled = true;
+      sync.encerrar();
+      window.removeEventListener('online', aoVoltarConexao);
     };
+  }, [userId, recarga]);
+
+  const tentarSincronizarNovamente = useCallback(() => {
+    const sync = syncRef.current;
+    if (!sync || sync.estadoAtual.fase === 'indisponivel') setRecarga(n => n + 1);
+    else void sync.tentarNovamente();
   }, []);
 
   const persistSnapshot = useCallback(() => {
@@ -190,9 +227,10 @@ export function CrmProvider({ children }: { children: ReactNode }) {
       idCounter: _idCounter,
     });
 
+    // Cache local do navegador: não é confirmação de gravação.
     saveLocalSnapshot(snapshot);
     void saveIndexedSnapshot(snapshot);
-    void saveCloudSnapshot(snapshot);
+    void syncRef.current?.sincronizar({ leads, visitas });
   }, [leads, visitas, justificativas, leadsExcluidos]);
 
   useEffect(() => {
@@ -440,9 +478,12 @@ export function CrmProvider({ children }: { children: ReactNode }) {
       };
       setLeadsExcluidos(prev => [excluido, ...prev]);
     }
+    // Exclusão explícita: a única forma de apagar o registro na nuvem.
+    syncRef.current?.registrarExclusao('visita', visitas.filter(v => v.lead_id === id).map(v => v.id));
+    syncRef.current?.registrarExclusao('lead', [id]);
     setLeads(prev => prev.filter(l => l.id !== id));
     setVisitas(prev => prev.filter(v => v.lead_id !== id));
-  }, [leads]);
+  }, [leads, visitas]);
 
   const agendarVisita = useCallback((leadId: string, dataVisita: string, horario?: string, notas?: string): Visita => {
     const now = new Date().toISOString();
@@ -598,6 +639,7 @@ export function CrmProvider({ children }: { children: ReactNode }) {
     const affectedLeadIds = new Set<string>();
     visitas.forEach(v => { if (idSet.has(v.id)) affectedLeadIds.add(v.lead_id); });
 
+    syncRef.current?.registrarExclusao('visita', [...idSet]);
     setVisitas(prev => prev.filter(v => !idSet.has(v.id)));
 
     // For each affected lead, if no more AGENDADA visits remain, revert pipeline & clear proxima_visita_em
@@ -660,6 +702,7 @@ export function CrmProvider({ children }: { children: ReactNode }) {
       addLead: addLeadScoped, updateLead, deleteLead, moverPipeline, agendarVisita, darFeedbackVisita,
       concluirVisitaComResultado, reagendarVisita, updateVisita, deleteVisita, deleteVisitas,
       getVisitasByLead, getLeadById, getJustificativaById, addJustificativa, checkDuplicates,
+      sincronizacao, tentarSincronizarNovamente,
     }}>
       {children}
     </CrmContext.Provider>

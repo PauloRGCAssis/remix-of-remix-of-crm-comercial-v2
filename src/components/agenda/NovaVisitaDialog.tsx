@@ -271,7 +271,7 @@ export function NovaVisitaDialog({ open, onOpenChange, initialClientName }: Nova
       created++;
     });
     toast({
-      title: created > 1 ? `🎯 ${created} visitas agendadas!` : "✔ Visita agendada!",
+      title: created > 1 ? `🎯 ${created} visitas agendadas — salvando…` : "✔ Visita agendada — salvando…",
       description: `Para ${format(date, "dd/MM/yyyy", { locale: ptBR })}${horario ? ` às ${horario}` : ""}.`,
     });
     onOpenChange(false);

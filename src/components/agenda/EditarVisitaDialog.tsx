@@ -188,7 +188,7 @@ export function EditarVisitaDialog({ open, onOpenChange, visita, lead }: EditarV
       }
     }
 
-    toast({ title: "✔ Visita atualizada!", description: "Card e cadastro do cliente foram sincronizados." });
+    toast({ title: "✔ Visita atualizada — salvando…", description: "O topo da tela mostra quando estiver salva na nuvem." });
     onOpenChange(false);
   };
 

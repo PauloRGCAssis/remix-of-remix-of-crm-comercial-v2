@@ -1,5 +1,6 @@
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
+import { SincronizacaoIndicador } from "@/components/SincronizacaoIndicador";
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -20,6 +21,7 @@ export function AppLayout({ children }: AppLayoutProps) {
               <span className="text-muted-foreground/30">|</span>
               <span className="text-sm text-muted-foreground/60">CRM Comercial</span>
             </div>
+            <SincronizacaoIndicador />
           </header>
           <main data-app-main-scroll="true" className="flex-1 p-4 md:p-6 overflow-x-auto overflow-y-auto">
             {children}

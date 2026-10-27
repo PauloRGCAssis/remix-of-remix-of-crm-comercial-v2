@@ -93,7 +93,7 @@ export default function ProspeccaoPage() {
         } else {
           moverPipeline(draggedLeadId, targetStage);
           const stageLabel = PIPELINE_STAGES.find(s => s.key === targetStage)?.label || targetStage;
-          toast({ title: "Lead movido!", description: `${lead.nome_fantasia} → ${stageLabel}` });
+          toast({ title: "Lead movido — salvando…", description: `${lead.nome_fantasia} → ${stageLabel}` });
         }
       }
     }
@@ -233,7 +233,7 @@ export default function ProspeccaoPage() {
         produtosInteresse: data.produtosInteresse,
         observacoes: data.observacoes,
       });
-      toast({ title: "Lead atualizado!", description: `${data.empresa} foi atualizado.` });
+      toast({ title: "Lead atualizado — salvando…", description: `${data.empresa} foi atualizado.` });
     } else {
       addLead({
         nome_fantasia: data.empresa,
@@ -262,7 +262,7 @@ export default function ProspeccaoPage() {
         produtosInteresse: data.produtosInteresse,
         observacoes: data.observacoes,
       });
-      toast({ title: "Lead adicionado!", description: `${data.empresa} — Aguardando Agendamento.` });
+      toast({ title: "Lead adicionado — salvando…", description: `${data.empresa} — Aguardando Agendamento.` });
     }
     setEditingLead(null);
   };
@@ -293,7 +293,7 @@ export default function ProspeccaoPage() {
         updateLead(agendarLeadId, { tipo_atendimento: tipoAtendimento });
       }
       const horarioStr = horario ? ` às ${horario}` : '';
-      toast({ title: "✅ Visita agendada!", description: `Visita marcada para ${format(new Date(dataVisita + 'T12:00:00'), "dd/MM/yyyy")}${horarioStr}.` });
+      toast({ title: "✅ Visita agendada — salvando…", description: `Visita marcada para ${format(new Date(dataVisita + 'T12:00:00'), "dd/MM/yyyy")}${horarioStr}.` });
     }
     setAgendarLeadId(null);
   };
@@ -301,21 +301,21 @@ export default function ProspeccaoPage() {
   const handleNaoConcluida = () => {
     if (feedbackVisitaId) {
       darFeedbackVisita(feedbackVisitaId, 'NAO_CONCLUIDA');
-      toast({ title: 'Visita não concluída. Reagende abaixo.' });
+      toast({ title: 'Visita não concluída — salvando… Reagende abaixo.' });
     }
   };
 
   const handleConcluir = (resultado: NegocioStatus, justificativaId?: string, motivo?: string, produtosNegociados?: ProdutoNegociado[]) => {
     if (feedbackVisitaId) {
       concluirVisitaComResultado(feedbackVisitaId, resultado, justificativaId, motivo, produtosNegociados);
-      toast({ title: resultado === 'FECHADO' ? '🎉 Negócio fechado! Lead em Negociação.' : 'Negociação encerrada.' });
+      toast({ title: resultado === 'FECHADO' ? '🎉 Negócio fechado — salvando…' : 'Negociação encerrada — salvando…' });
     }
   };
 
   const handleReagendar = (novaData: string, notas?: string) => {
     if (feedbackLeadId) {
       reagendarVisita(feedbackLeadId, novaData, undefined, notas);
-      toast({ title: "📅 Visita reagendada!", description: `Nova visita em ${format(new Date(novaData + 'T12:00:00'), "dd/MM/yyyy")}.` });
+      toast({ title: "📅 Visita reagendada — salvando…", description: `Nova visita em ${format(new Date(novaData + 'T12:00:00'), "dd/MM/yyyy")}.` });
     }
     setFeedbackVisitaId(null);
     setFeedbackLeadId(null);
@@ -607,7 +607,7 @@ export default function ProspeccaoPage() {
                             <Button size="sm" variant="outline" className="w-full h-7 text-xs" onClick={(e) => {
                               e.stopPropagation();
                               moverPipeline(lead.id, 'VISITA_AGENDADA');
-                              toast({ title: "✅ Visita realizada!", description: `${lead.nome_fantasia} movido para Visitas Realizadas.` });
+                              toast({ title: "✅ Visita realizada — salvando…", description: `${lead.nome_fantasia} movido para Visitas Realizadas.` });
                             }}>
                               <CheckCircle className="h-3 w-3 mr-1" /> Visita Realizada
                             </Button>
@@ -616,7 +616,7 @@ export default function ProspeccaoPage() {
                             <Button size="sm" variant="outline" className="w-full h-7 text-xs" onClick={(e) => {
                               e.stopPropagation();
                               moverPipeline(lead.id, 'EM_NEGOCIACAO');
-                              toast({ title: "🤝 Em negociação!", description: `${lead.nome_fantasia} movido para Em Negociação.` });
+                              toast({ title: "🤝 Em negociação — salvando…", description: `${lead.nome_fantasia} movido para Em Negociação.` });
                             }}>
                               <Handshake className="h-3 w-3 mr-1" /> Em Negociação
                             </Button>
@@ -626,7 +626,7 @@ export default function ProspeccaoPage() {
                               <Button size="sm" className="flex-1 h-7 text-xs bg-[hsl(142,60%,40%)] hover:bg-[hsl(142,60%,35%)]" onClick={(e) => {
                                 e.stopPropagation();
                                 moverPipeline(lead.id, 'NEGOCIACAO_CONCRETIZADA');
-                                toast({ title: "🎉 Negócio concretizado!", description: `${lead.nome_fantasia} — parabéns!` });
+                                toast({ title: "🎉 Negócio concretizado — salvando…", description: `${lead.nome_fantasia} — parabéns!` });
                               }}>
                                 <CheckCircle className="h-3 w-3 mr-1" /> Concretizado
                               </Button>
@@ -784,7 +784,7 @@ export default function ProspeccaoPage() {
         visitaHorario={editingLead?.status_pipeline === 'AGENDADO' ? visitas.find(v => v.lead_id === editingLead.id && v.status === 'AGENDADA')?.horario_visita : undefined}
         onVisitaDateChange={editingLead?.status_pipeline === 'AGENDADO' ? (novaData, horario) => {
           reagendarVisita(editingLead.id, novaData, horario);
-          toast({ title: "📅 Data alterada!", description: `Visita reagendada para ${format(new Date(novaData + 'T12:00:00'), "dd/MM/yyyy")}.` });
+          toast({ title: "📅 Data alterada — salvando…", description: `Visita reagendada para ${format(new Date(novaData + 'T12:00:00'), "dd/MM/yyyy")}.` });
         } : undefined}
       />
 
@@ -836,7 +836,7 @@ export default function ProspeccaoPage() {
               onClick={() => {
                 if (deleteConfirmLead) {
                   deleteLead(deleteConfirmLead.id, deleteMotivo.trim());
-                  toast({ title: "Lead excluído", description: `${deleteConfirmLead.nome_fantasia} foi removido.` });
+                  toast({ title: "Lead excluído — salvando…", description: `${deleteConfirmLead.nome_fantasia} foi removido.` });
                   setShowDetail(false);
                   setDeleteConfirmLead(null);
                   setDeleteMotivo("");
@@ -875,7 +875,7 @@ export default function ProspeccaoPage() {
               onClick={() => {
                 if (encerrarLead) {
                   moverPipeline(encerrarLead.id, 'NEGOCIACAO_ENCERRADA', encerrarMotivo.trim());
-                  toast({ title: "Negociação encerrada.", description: `${encerrarLead.nome_fantasia} movido para Encerrada.` });
+                  toast({ title: "Negociação encerrada — salvando…", description: `${encerrarLead.nome_fantasia} movido para Encerrada.` });
                   setEncerrarLead(null);
                   setEncerrarMotivo("");
                 }

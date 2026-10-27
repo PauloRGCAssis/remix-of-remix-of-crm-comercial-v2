@@ -152,33 +152,33 @@ export default function AgendaPage() {
   const handleVisitaRealizada = (visita: Visita & { lead?: Lead }) => {
     darFeedbackVisita(visita.id, 'REALIZADA' as VisitaStatus);
     moverPipeline(visita.lead_id, 'VISITA_AGENDADA');
-    toast({ title: '✔ Visita realizada!', description: 'O lead foi movido para "Visitas Realizadas".' });
+    toast({ title: '✔ Visita realizada — salvando…', description: 'O lead foi movido para "Visitas Realizadas".' });
   };
 
   // Reagendar direto do card da agenda
   const handleReagendarDireto = (leadId: string, novaData: string, horario?: string, notas?: string) => {
     reagendarVisita(leadId, novaData, horario, notas);
-    toast({ title: "📅 Visita reagendada!", description: `Nova visita em ${format(new Date(novaData + 'T12:00:00'), "dd/MM/yyyy")}.` });
+    toast({ title: "📅 Visita reagendada — salvando…", description: `Nova visita em ${format(new Date(novaData + 'T12:00:00'), "dd/MM/yyyy")}.` });
   };
 
   const handleNaoConcluida = () => {
     if (feedbackVisitaId) {
       darFeedbackVisita(feedbackVisitaId, 'NAO_CONCLUIDA');
-      toast({ title: 'Visita não concluída.' });
+      toast({ title: 'Visita não concluída — salvando…' });
     }
   };
 
   const handleConcluir = (resultado: NegocioStatus, justificativaId?: string, motivo?: string, produtosNegociados?: ProdutoNegociado[]) => {
     if (feedbackVisitaId) {
       concluirVisitaComResultado(feedbackVisitaId, resultado, justificativaId, motivo, produtosNegociados);
-      toast({ title: resultado === 'FECHADO' ? '🎉 Negócio fechado!' : 'Negociação encerrada.' });
+      toast({ title: resultado === 'FECHADO' ? '🎉 Negócio fechado — salvando…' : 'Negociação encerrada — salvando…' });
     }
   };
 
   const handleReagendar = (novaData: string, notas?: string) => {
     if (feedbackLeadId) {
       reagendarVisita(feedbackLeadId, novaData, undefined, notas);
-      toast({ title: "📅 Visita reagendada!", description: `Nova visita em ${format(new Date(novaData + 'T12:00:00'), "dd/MM/yyyy")}.` });
+      toast({ title: "📅 Visita reagendada — salvando…", description: `Nova visita em ${format(new Date(novaData + 'T12:00:00'), "dd/MM/yyyy")}.` });
     }
     setFeedbackVisitaId(null);
     setFeedbackLeadId(null);
@@ -354,7 +354,7 @@ export default function AgendaPage() {
                         onExcluir={(vis) => {
                           deleteVisita(vis.id);
                           setSelectedIds(cur => cur.filter(id => id !== vis.id));
-                          toast({ title: "Agendamento excluído com sucesso." });
+                          toast({ title: "Agendamento excluído — salvando…" });
                         }}
                         selected={selectedIds.includes(v.id)}
                         onToggleSelect={(id, checked) =>
@@ -411,7 +411,7 @@ export default function AgendaPage() {
                 const count = deleteVisitas(selectedIds);
                 setSelectedIds([]);
                 setBatchDeleteOpen(false);
-                toast({ title: `${count} agendamento(s) excluído(s) com sucesso.` });
+                toast({ title: `${count} agendamento(s) excluído(s) — salvando…` });
               }}
             >
               Excluir

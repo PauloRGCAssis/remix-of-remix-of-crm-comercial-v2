@@ -96,8 +96,8 @@ export function BatchEditVisitasDialog({ open, onOpenChange, visitas, onDone }: 
     });
 
     toast({
-      title: `✔ ${visitas.length} visita(s) atualizada(s)`,
-      description: "As alterações em lote foram aplicadas.",
+      title: `✔ ${visitas.length} visita(s) atualizada(s) — salvando…`,
+      description: "O topo da tela mostra quando estiverem salvas na nuvem.",
     });
     onDone();
     onOpenChange(false);
