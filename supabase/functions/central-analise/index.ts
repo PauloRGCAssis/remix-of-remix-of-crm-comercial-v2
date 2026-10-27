@@ -228,7 +228,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    // ---- Autorização: somente Administrador e Gestor podem usar a IA -------
+    // ---- Autorização: role admin ou permissão da matriz --------------------
     const authHeader = req.headers.get("Authorization") ?? "";
     const jwt = authHeader.replace(/^Bearer\s+/i, "").trim();
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -257,19 +257,47 @@ Deno.serve(async (req) => {
     const roles: Array<{ role: string }> = rolesRes.ok ? await rolesRes.json() : [];
     // Um papel admin não dispensa a obrigatoriedade de acesso ativo.
     const accessRes = await fetch(
-      `${supabaseUrl}/rest/v1/user_access?select=ativo,permission_profiles(nome)&user_id=eq.${userId}`,
+      `${supabaseUrl}/rest/v1/user_access?select=ativo,profile_id,permission_profiles(ativo)&user_id=eq.${userId}`,
       { headers: adminHeaders },
     );
     if (!accessRes.ok) return negar("Falha ao validar acesso.", 503);
     const access = await accessRes.json();
     const row = Array.isArray(access) ? access[0] : null;
     if (row?.ativo !== true) return negar("Acesso não autorizado.", 403);
-    const perfil = String(row?.permission_profiles?.nome ?? "").trim().toLowerCase();
-    const autorizado = roles.some((r) => r.role === "admin")
-      || perfil === "administrador" || perfil === "gestor";
+
+    // Mesma regra do frontend (usePermissions.podeUsarIA): role admin, ou a
+    // matriz concede `inteligencia` e `inteligencia.central_analise` (acessar).
+    // A exceção individual prevalece sobre o perfil; perfil inativo bloqueia.
+    // O nome do perfil nunca concede privilégio.
+    let autorizado = roles.some((r) => r.role === "admin");
+    if (!autorizado) {
+      const modulos = ["inteligencia", "inteligencia.central_analise"];
+      const filtro = `modulo=in.(${modulos.map((m) => `"${m}"`).join(",")})&acao=eq.acessar`;
+      const ler = async (url: string) => {
+        const res = await fetch(url, { headers: adminHeaders });
+        if (!res.ok) throw new Error("permissões");
+        return (await res.json()) as Array<{ modulo: string; permitido: boolean }>;
+      };
+      const perfilValido = !row.profile_id || row.permission_profiles?.ativo === true;
+      if (!perfilValido) return negar("Acesso não autorizado.", 403);
+      let individuais: Array<{ modulo: string; permitido: boolean }>;
+      let doPerfil: Array<{ modulo: string; permitido: boolean }> = [];
+      try {
+        individuais = await ler(`${supabaseUrl}/rest/v1/user_permissions?select=modulo,permitido&user_id=eq.${userId}&${filtro}`);
+        if (row.profile_id) {
+          doPerfil = await ler(`${supabaseUrl}/rest/v1/profile_permissions?select=modulo,permitido&profile_id=eq.${row.profile_id}&${filtro}`);
+        }
+      } catch {
+        return negar("Falha ao validar permissões.", 503);
+      }
+      const efetiva = (modulo: string) =>
+        (individuais.find((p) => p.modulo === modulo)?.permitido
+          ?? doPerfil.find((p) => p.modulo === modulo)?.permitido) === true;
+      autorizado = modulos.every(efetiva);
+    }
 
     if (!autorizado) {
-      return negar("Recurso de IA disponível apenas para Administrador e Gestor.", 403);
+      return negar("Sem permissão para usar a Central de Análise (IA).", 403);
     }
 
     const body = await req.json();

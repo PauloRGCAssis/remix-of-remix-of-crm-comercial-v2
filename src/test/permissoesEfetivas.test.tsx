@@ -26,7 +26,7 @@ vi.mock('@/integrations/supabase/client', () => {
       if (table === 'profiles') return { data: { nome: 'Fictício', vendedor: 'VENDEDOR A', must_change_password: false }, error: null };
       if (table === 'user_roles') return { data: db.roles, error: null };
       if (table === 'user_permissions') return { data: db.userPerms, error: null };
-      if (table === 'permission_profiles') return { data: { nome: String(filtros.id) }, error: null };
+      if (table === 'permission_profiles') return { data: { nome: String(filtros.id), ativo: true }, error: null };
       if (table === 'profile_permissions') return { data: db.perfis[String(filtros.profile_id)] ?? [], error: null };
       return { data: null, error: null };
     };

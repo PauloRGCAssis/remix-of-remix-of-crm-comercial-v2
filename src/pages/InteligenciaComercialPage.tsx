@@ -41,6 +41,7 @@ import { SearchableCombobox } from "@/components/SearchableCombobox";
 import { usePersistentState } from "@/hooks/usePersistentState";
 import { MetaClienteTab } from "@/components/inteligencia/MetaClienteTab";
 import { usePermissions } from "@/hooks/usePermissions";
+import { subAbas } from "@/lib/modulesCatalog";
 import { useAppSetting, REATIVACAO_DIAS_KEY, REATIVACAO_DIAS_DEFAULT } from "@/hooks/useAppSetting";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -199,8 +200,13 @@ function MixProdutosCard({ mixProdutos, fatTotal }: { mixProdutos: { nome: strin
 }
 
 export default function InteligenciaComercialPage() {
-  // Chat/IA disponível apenas para Administrador e Gestor.
-  const { podeUsarIA } = usePermissions();
+  // Cada sub-aba exige a própria permissão (inteligencia.<aba>); a IA também.
+  const { podeUsarIA, can } = usePermissions();
+  const abasPermitidas = useMemo(
+    () => new Set(subAbas("inteligencia").filter((s) => can(s.key, "acessar")).map((s) => s.aba)),
+    [can],
+  );
+  const podeAba = (aba: string) => abasPermitidas.has(aba);
   const { data: sales, isLoading } = useSalesData();
 
   const today = new Date();
@@ -239,7 +245,11 @@ export default function InteligenciaComercialPage() {
   const [debugProdutos, setDebugProdutos] = useState(false);
   const [analysisMode, setAnalysisMode] = usePersistentState<"compare" | "continuous">("inteligencia:analysisMode", "compare");
   const [continuousPeriod, setContinuousPeriod] = usePersistentState<"3m" | "6m" | "12m" | "ytd">("inteligencia:continuousPeriod", "6m");
-  const [activeTab, setActiveTab] = usePersistentState("inteligencia:activeTab", "resumo");
+  const [abaSalva, setActiveTab] = usePersistentState("inteligencia:activeTab", "resumo");
+  // Aba salva sem permissão cai na primeira aba permitida (o conteúdo só monta na aba ativa).
+  const activeTab = abasPermitidas.has(abaSalva)
+    ? abaSalva
+    : (subAbas("inteligencia").find((s) => abasPermitidas.has(s.aba))?.aba ?? "");
 
   // Última data REAL disponível na base (usada como âncora do modo contínuo).
   const lastSalesDate = useMemo(() => {
@@ -524,31 +534,39 @@ export default function InteligenciaComercialPage() {
               {[1,2,3,4].map(i => <Skeleton key={i} className="h-20" />)}
             </div>
           </CardContent></Card>
+        ) : !activeTab ? (
+          <Card><CardContent className="p-8 text-center text-muted-foreground">Você não possui permissão para nenhuma aba da Inteligência Comercial.</CardContent></Card>
         ) : (
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
             <TabsList className="flex flex-wrap h-auto gap-1">
-              <TabsTrigger value="resumo">Resumo</TabsTrigger>
-              <TabsTrigger value="analise">
-                <Lightbulb className="h-3.5 w-3.5 mr-1" />
-                Análise Inteligente
-              </TabsTrigger>
-              <TabsTrigger value="clientes">Clientes</TabsTrigger>
-              <TabsTrigger value="produtos">Produtos</TabsTrigger>
-              <TabsTrigger value="vendedores">Vendedores</TabsTrigger>
-              <TabsTrigger value="alertas">
-                Alertas
-                {data.alertas.length > 0 && (
-                  <Badge variant="destructive" className="ml-1 text-[10px] px-1.5">{data.alertas.length}</Badge>
-                )}
-              </TabsTrigger>
-              <TabsTrigger value="previsao">Previsão</TabsTrigger>
-              <TabsTrigger value="curva-abc">Curva ABC</TabsTrigger>
-              <TabsTrigger value="leitura">
-                <Lightbulb className="h-3.5 w-3.5 mr-1" />
-                Leitura Estratégica (Metas)
-              </TabsTrigger>
-              <TabsTrigger value="graficos">Gráficos</TabsTrigger>
-              <TabsTrigger value="meta-cliente">Meta Cliente</TabsTrigger>
+              {podeAba("resumo") && <TabsTrigger value="resumo">Resumo</TabsTrigger>}
+              {podeAba("analise") && (
+                <TabsTrigger value="analise">
+                  <Lightbulb className="h-3.5 w-3.5 mr-1" />
+                  Análise Inteligente
+                </TabsTrigger>
+              )}
+              {podeAba("clientes") && <TabsTrigger value="clientes">Clientes</TabsTrigger>}
+              {podeAba("produtos") && <TabsTrigger value="produtos">Produtos</TabsTrigger>}
+              {podeAba("vendedores") && <TabsTrigger value="vendedores">Vendedores</TabsTrigger>}
+              {podeAba("alertas") && (
+                <TabsTrigger value="alertas">
+                  Alertas
+                  {data.alertas.length > 0 && (
+                    <Badge variant="destructive" className="ml-1 text-[10px] px-1.5">{data.alertas.length}</Badge>
+                  )}
+                </TabsTrigger>
+              )}
+              {podeAba("previsao") && <TabsTrigger value="previsao">Previsão</TabsTrigger>}
+              {podeAba("curva-abc") && <TabsTrigger value="curva-abc">Curva ABC</TabsTrigger>}
+              {podeAba("leitura") && (
+                <TabsTrigger value="leitura">
+                  <Lightbulb className="h-3.5 w-3.5 mr-1" />
+                  Leitura Estratégica (Metas)
+                </TabsTrigger>
+              )}
+              {podeAba("graficos") && <TabsTrigger value="graficos">Gráficos</TabsTrigger>}
+              {podeAba("meta-cliente") && <TabsTrigger value="meta-cliente">Meta Cliente</TabsTrigger>}
               {podeUsarIA && (
                 <TabsTrigger value="central-analise">
                   <Brain className="h-3.5 w-3.5 mr-1" />
@@ -585,6 +603,7 @@ export default function InteligenciaComercialPage() {
             )}
 
             {/* ==================== RESUMO EXECUTIVO ==================== */}
+            {podeAba("resumo") && (
             <TabsContent value="resumo" className="space-y-4">
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
                 <KpiBoxComparativo title="Faturamento" atualValue={R$(data.fatAtual)}
@@ -832,8 +851,10 @@ export default function InteligenciaComercialPage() {
                 </CollapsibleContent>
               </Collapsible>
             </TabsContent>
+            )}
 
             {/* ==================== ANÁLISE INTELIGENTE ==================== */}
+            {podeAba("analise") && (
             <TabsContent value="analise" className="space-y-4">
               <Card className="border-primary/30 bg-primary/5">
                 <CardContent className="p-5">
@@ -985,8 +1006,10 @@ export default function InteligenciaComercialPage() {
                 </CardContent>
               </Card>
             </TabsContent>
+            )}
 
             {/* ==================== CLIENTES ==================== */}
+            {podeAba("clientes") && (
             <TabsContent value="clientes" className="space-y-4">
               <div className="grid grid-cols-1 gap-4">
                 <Card>
@@ -1073,8 +1096,10 @@ export default function InteligenciaComercialPage() {
               {/* Clientes Novos (janela de 6 meses sem compras) */}
               <NovosClientesAnalysis sales={sales ?? []} variant="clientes" />
             </TabsContent>
+            )}
 
             {/* ==================== PRODUTOS ==================== */}
+            {podeAba("produtos") && (
             <TabsContent value="produtos" className="space-y-4">
               <Tabs defaultValue="analise-produtos" className="space-y-4">
                 <TabsList>
@@ -1208,8 +1233,10 @@ export default function InteligenciaComercialPage() {
                 </TabsContent>
               </Tabs>
             </TabsContent>
+            )}
 
             {/* ==================== VENDEDORES ==================== */}
+            {podeAba("vendedores") && (
             <TabsContent value="vendedores" className="space-y-4">
               {data.hasComp && (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -1415,8 +1442,10 @@ export default function InteligenciaComercialPage() {
               {/* Clientes Novos por vendedor */}
               <NovosClientesAnalysis sales={sales ?? []} variant="vendedores" />
             </TabsContent>
+            )}
 
             {/* ==================== ALERTAS ==================== */}
+            {podeAba("alertas") && (
             <TabsContent value="alertas" className="space-y-3">
               {data.alertas.length === 0 ? (
                 <Card>
@@ -1515,8 +1544,10 @@ export default function InteligenciaComercialPage() {
                 </>
               )}
             </TabsContent>
+            )}
 
             {/* ==================== PREVISÃO ==================== */}
+            {podeAba("previsao") && (
             <TabsContent value="previsao" className="space-y-4">
               <Card>
                 <CardHeader className="pb-2">
@@ -1737,8 +1768,10 @@ export default function InteligenciaComercialPage() {
                 </CollapsibleContent>
               </Collapsible>
             </TabsContent>
+            )}
 
             {/* ==================== CURVA ABC ==================== */}
+            {podeAba("curva-abc") && (
             <TabsContent value="curva-abc">
               <CurvaAbcTab
                 abcClientes={data.abcClientes}
@@ -1755,12 +1788,16 @@ export default function InteligenciaComercialPage() {
                 abcResumoProdutos={data.abcResumoProdutos}
               />
             </TabsContent>
+            )}
 
+            {podeAba("meta-cliente") && (
             <TabsContent value="meta-cliente">
               <MetaClienteTab vendedorFiltro={filters.vendedores.length === 1 ? filters.vendedores[0] : undefined} />
             </TabsContent>
+            )}
 
             {/* ==================== LEITURA ESTRATÉGICA ==================== */}
+            {podeAba("leitura") && (
             <TabsContent value="leitura">
               <LeituraEstrategicaTab
                 abcClientes={data.abcClientes}
@@ -1775,8 +1812,10 @@ export default function InteligenciaComercialPage() {
                 vendedorLabel={filters.vendedores[0]}
               />
             </TabsContent>
+            )}
 
             {/* ==================== GRÁFICOS ==================== */}
+            {podeAba("graficos") && (
             <TabsContent value="graficos" className="space-y-4">
               <Card>
                 <CardHeader className="pb-2"><CardTitle className="text-sm">Evolução Mensal de Faturamento</CardTitle></CardHeader>
@@ -1848,6 +1887,7 @@ export default function InteligenciaComercialPage() {
                 </CardContent>
               </Card>
             </TabsContent>
+            )}
 
             {podeUsarIA && (
             <TabsContent value="central-analise" className="space-y-4">

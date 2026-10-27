@@ -2,7 +2,7 @@ import { useCallback, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole, normalizeVendorName, sameVendor } from "@/hooks/useUserRole";
-import { type PermissionAction } from "@/lib/modulesCatalog";
+import { exigeVisualizar, type PermissionAction } from "@/lib/modulesCatalog";
 import { useAuth } from "@/contexts/AuthContext";
 
 export type DataScope = "meus_dados" | "vendedores_selecionados" | "empresa";
@@ -41,9 +41,11 @@ export interface PermissionsState {
   regioesPermitidas: string[] | null;
   /** Nome do perfil de permissão atribuído ao usuário (quando houver). */
   perfilNome: string | null;
-  /** Somente Administrador e Gestor podem usar recursos de IA. */
+  /** IA liberada pela matriz: `inteligencia` + `inteligencia.central_analise` (ou role admin). */
   podeUsarIA: boolean;
   can: (modulo: string, acao?: PermissionAction) => boolean;
+  /** Pode abrir o módulo (menu e rota): ver `exigeVisualizar`. */
+  podeAbrir: (modulo: string) => boolean;
   canSee: (vendedor?: string | null) => boolean;
 }
 
@@ -71,21 +73,28 @@ export function usePermissions(): PermissionsState {
 
       let profilePerms: { modulo: string; acao: string; permitido: boolean }[] = [];
       let perfilNome: string | null = null;
+      let perfilInvalido = false;
       if (access?.profile_id) {
         const perfilRes = await supabase
           .from("permission_profiles")
-          .select("nome")
+          .select("nome, ativo")
           .eq("id", access.profile_id)
           .maybeSingle();
         if (perfilRes.error) throw perfilRes.error;
-        if (!perfilRes.data) throw new Error('Perfil indisponível');
-        perfilNome = (perfilRes.data as { nome?: string } | null)?.nome ?? null;
-        const res = await supabase
-          .from("profile_permissions")
-          .select("modulo, acao, permitido")
-          .eq("profile_id", access.profile_id);
-        if (res.error) throw res.error;
-        profilePerms = res.data ?? [];
+        const perfil = perfilRes.data as { nome?: string; ativo?: boolean } | null;
+        // Perfil inexistente ou inativo bloqueia o usuário (inclusive exceções);
+        // a role técnica `admin` independe do perfil.
+        if (perfil?.ativo !== true) {
+          perfilInvalido = true;
+        } else {
+          perfilNome = perfil.nome ?? null;
+          const res = await supabase
+            .from("profile_permissions")
+            .select("modulo, acao, permitido")
+            .eq("profile_id", access.profile_id);
+          if (res.error) throw res.error;
+          profilePerms = res.data ?? [];
+        }
       }
       let scope: ResolvedScope | null = null;
       if (access?.scope_id) {
@@ -103,6 +112,7 @@ export function usePermissions(): PermissionsState {
       return {
         access,
         perfilNome,
+        perfilInvalido,
         scope,
         profilePerms,
         userPerms: (userPermsRes.data ?? []) as typeof profilePerms,
@@ -122,10 +132,10 @@ export function usePermissions(): PermissionsState {
   const escopo: DataScope = isGestor
     ? "empresa"
     : (escopoPersonalizado?.base ?? access?.escopo ?? "meus_dados");
-  const ativo = !!userId && verified && !roleLoading && query.isSuccess && access?.ativo === true;
+  const ativo =
+    !!userId && verified && !roleLoading && query.isSuccess && access?.ativo === true &&
+    (isGestor || query.data?.perfilInvalido !== true);
   const perfilNome = query.data?.perfilNome ?? null;
-  const podeUsarIA =
-    isGestor || ["administrador", "gestor"].includes((perfilNome ?? "").trim().toLowerCase());
 
   const can = useCallback(
     (modulo: string, acao: PermissionAction = "acessar") => {
@@ -135,6 +145,15 @@ export function usePermissions(): PermissionsState {
     },
     [isGestor, ativo, map],
   );
+
+  /** Abrir o módulo (menu e rota): "acessar" e, quando o módulo oferece, "visualizar". */
+  const podeAbrir = useCallback(
+    (modulo: string) => can(modulo, "acessar") && (!exigeVisualizar(modulo) || can(modulo, "visualizar")),
+    [can],
+  );
+
+  // A IA segue a matriz (módulo + sub-aba), nunca o nome do perfil.
+  const podeUsarIA = can("inteligencia", "acessar") && can("inteligencia.central_analise", "acessar");
 
   const vinculados = useMemo(
     () => (vendedores.length ? vendedores : vendedor ? [vendedor] : []),
@@ -190,12 +209,13 @@ export function usePermissions(): PermissionsState {
     vendedor,
     escopo,
     perfilNome,
-    podeUsarIA: ativo && podeUsarIA,
+    podeUsarIA,
     escopoPersonalizado,
     vendedoresPermitidos,
     clientesPermitidos,
     regioesPermitidas,
     can,
+    podeAbrir,
     canSee,
   };
 }

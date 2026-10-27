@@ -42,7 +42,7 @@ vi.mock('@/integrations/supabase/client', () => {
     const { db } = mocks;
     if (table === 'user_access') return db.accessError ? { data: null, error: { message: 'network' } } : { data: db.access, error: null };
     if (table === 'profiles') return { data: { nome: 'Usuário Fictício', vendedor: 'VENDEDOR A', vendedores: ['VENDEDOR A'], must_change_password: false }, error: null };
-    if (table === 'permission_profiles') return { data: { nome: db.perfilNome }, error: null };
+    if (table === 'permission_profiles') return { data: { nome: db.perfilNome, ativo: true }, error: null };
     return { data: null, error: null };
   }
   function list(table: string) {
@@ -203,9 +203,18 @@ describe('rotas — Vendedor e falhas', () => {
   });
   it('vendedor com exceção comercial individual acessa o módulo autorizado', async () => {
     comoVendedor();
-    mocks.db.userPerms = [{ modulo: 'bonificacoes', acao: 'acessar', permitido: true }];
+    mocks.db.userPerms = [
+      { modulo: 'bonificacoes', acao: 'acessar', permitido: true },
+      { modulo: 'bonificacoes', acao: 'visualizar', permitido: true },
+    ];
     abrir('/bonificacoes');
     expect(await screen.findByText('página bonificações')).toBeInTheDocument();
+  });
+  it('exceção individual só de "acessar" não abre módulo que exige "visualizar"', async () => {
+    comoVendedor();
+    mocks.db.userPerms = [{ modulo: 'bonificacoes', acao: 'acessar', permitido: true }];
+    abrir('/bonificacoes');
+    expect(await screen.findByText(/não possui permissão/)).toBeInTheDocument();
   });
   it('exceção individual negativa prevalece sobre o perfil', async () => {
     comoGestor();

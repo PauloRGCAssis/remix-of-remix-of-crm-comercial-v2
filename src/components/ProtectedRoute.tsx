@@ -46,7 +46,7 @@ export function ProtectedRoute({
   const logged = useRef<string | null>(null);
 
   const moduleKey = modulo ?? moduleKeyForRoute(location.pathname) ?? undefined;
-  const permitido = perms.ativo && !perms.loading && (!moduleKey || perms.can(moduleKey, "acessar"));
+  const permitido = perms.ativo && !perms.loading && (!moduleKey || perms.podeAbrir(moduleKey));
 
   useEffect(() => {
     if (!session || perms.loading || !permitido) return;

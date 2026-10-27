@@ -208,7 +208,9 @@ export function PermissoesMatrixTab() {
 
   function aplicarPadrao() {
     if (!selected) return;
-    const mods = DEFAULT_PROFILE_MODULES[selected.nome];
+    // O padrão vale só para os perfis do sistema: um perfil personalizado
+    // chamado "Administrador" ou "Gestor" não herda privilégios pelo nome.
+    const mods = selected.is_system ? DEFAULT_PROFILE_MODULES[selected.nome] : undefined;
     if (!mods) {
       toast.info("Este perfil personalizado não possui padrão. Marque as permissões manualmente.");
       return;

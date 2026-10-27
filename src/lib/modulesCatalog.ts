@@ -22,6 +22,8 @@ export interface ModuleDef {
   route?: string;
   /** Ações aplicáveis; padrão = todas. */
   acoes?: PermissionAction[];
+  /** Valor da aba na tela do módulo pai (somente sub-abas). */
+  aba?: string;
   children?: ModuleDef[];
 }
 
@@ -45,18 +47,18 @@ export const MODULE_CATALOG: ModuleDef[] = [
     route: "/inteligencia",
     acoes: SOMENTE_ACESSO,
     children: [
-      { key: "inteligencia.resumo", label: "Resumo", acoes: SOMENTE_ACESSO },
-      { key: "inteligencia.analise", label: "Análise", acoes: SOMENTE_ACESSO },
-      { key: "inteligencia.clientes", label: "Clientes", acoes: SOMENTE_ACESSO },
-      { key: "inteligencia.produtos", label: "Produtos", acoes: SOMENTE_ACESSO },
-      { key: "inteligencia.vendedores", label: "Vendedores", acoes: SOMENTE_ACESSO },
-      { key: "inteligencia.alertas", label: "Alertas", acoes: SOMENTE_ACESSO },
-      { key: "inteligencia.previsao", label: "Previsão", acoes: SOMENTE_ACESSO },
-      { key: "inteligencia.curva_abc", label: "Curva ABC", acoes: SOMENTE_ACESSO },
-      { key: "inteligencia.leitura", label: "Leitura Estratégica (Metas)", acoes: SOMENTE_ACESSO },
-      { key: "inteligencia.graficos", label: "Gráficos", acoes: SOMENTE_ACESSO },
-      { key: "inteligencia.meta_cliente", label: "Meta Cliente", acoes: SOMENTE_ACESSO },
-      { key: "inteligencia.central_analise", label: "Central de Análise (IA)", acoes: SOMENTE_ACESSO },
+      { key: "inteligencia.resumo", label: "Resumo", acoes: SOMENTE_ACESSO, aba: "resumo" },
+      { key: "inteligencia.analise", label: "Análise", acoes: SOMENTE_ACESSO, aba: "analise" },
+      { key: "inteligencia.clientes", label: "Clientes", acoes: SOMENTE_ACESSO, aba: "clientes" },
+      { key: "inteligencia.produtos", label: "Produtos", acoes: SOMENTE_ACESSO, aba: "produtos" },
+      { key: "inteligencia.vendedores", label: "Vendedores", acoes: SOMENTE_ACESSO, aba: "vendedores" },
+      { key: "inteligencia.alertas", label: "Alertas", acoes: SOMENTE_ACESSO, aba: "alertas" },
+      { key: "inteligencia.previsao", label: "Previsão", acoes: SOMENTE_ACESSO, aba: "previsao" },
+      { key: "inteligencia.curva_abc", label: "Curva ABC", acoes: SOMENTE_ACESSO, aba: "curva-abc" },
+      { key: "inteligencia.leitura", label: "Leitura Estratégica (Metas)", acoes: SOMENTE_ACESSO, aba: "leitura" },
+      { key: "inteligencia.graficos", label: "Gráficos", acoes: SOMENTE_ACESSO, aba: "graficos" },
+      { key: "inteligencia.meta_cliente", label: "Meta Cliente", acoes: SOMENTE_ACESSO, aba: "meta-cliente" },
+      { key: "inteligencia.central_analise", label: "Central de Análise (IA)", acoes: SOMENTE_ACESSO, aba: "central-analise" },
     ],
   },
   { key: "metas", label: "Metas Comerciais", route: "/metas" },
@@ -110,6 +112,24 @@ const ROUTE_TO_MODULE = new Map<string, string>(
 
 export function moduleKeyForRoute(pathname: string): string | null {
   return ROUTE_TO_MODULE.get(pathname) ?? null;
+}
+
+/**
+ * Contrato de leitura: o módulo que oferece "visualizar" na matriz exige
+ * "acessar" E "visualizar" para ser aberto (menu e rota). Módulos e sub-abas
+ * que só oferecem "acessar" (Dashboard, Análise de Clientes, Estudo de Vendas,
+ * Inteligência e sub-abas, Relatórios) e as permissões especiais não exigem
+ * "visualizar": neles, "acessar" já autoriza a leitura.
+ */
+export function exigeVisualizar(modulo: string): boolean {
+  const def = flattenModules().find((m) => m.key === modulo);
+  return !!def && moduleActions(def).includes("visualizar");
+}
+
+/** Sub-abas do módulo pai, na ordem da tela, com a chave de permissão de cada uma. */
+export function subAbas(modulo: string): { aba: string; key: string }[] {
+  const def = MODULE_CATALOG.find((m) => m.key === modulo);
+  return (def?.children ?? []).filter((c) => !!c.aba).map((c) => ({ aba: c.aba as string, key: c.key }));
 }
 
 /** Módulos liberados por padrão em cada perfil de sistema. */

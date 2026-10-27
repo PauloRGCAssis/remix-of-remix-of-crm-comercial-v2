@@ -37,3 +37,12 @@ for (const scenario of [
     if (context.result.ativo && !scenario.admin) assert.equal(context.result.canSee('B'), false);
   });
 }
+
+test('central-analise autoriza pela matriz, nunca pelo nome do perfil', () => {
+  const edge = readFileSync(new URL('../supabase/functions/central-analise/index.ts', import.meta.url), 'utf8');
+  assert.doesNotMatch(edge, /perfil\s*===\s*["'](administrador|gestor)["']/i);
+  assert.doesNotMatch(edge, /permission_profiles\(nome\)/);
+  assert.match(edge, /"inteligencia", "inteligencia\.central_analise"/);
+  assert.match(edge, /permission_profiles\(ativo\)/);
+  assert.match(edge, /modulos\.every\(efetiva\)/);
+});

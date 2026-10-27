@@ -42,7 +42,7 @@ import {
 } from "@/components/ui/sidebar";
 
 const menuItems = [
-  { title: "Dashboard", url: "/", icon: LayoutDashboard },
+  { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { title: "Prospecção", url: "/prospeccao", icon: Target },
   { title: "Ponto de Venda", url: "/ponto-de-venda", icon: Store },
   { title: "Agenda de Visitas", url: "/agenda", icon: Calendar },
@@ -70,13 +70,13 @@ export function AppSidebar() {
   const collapsed = state === "collapsed";
   const location = useLocation();
   const { isGestor, isAdmin, nome, vendedor } = useUserRole();
-  const { can } = usePermissions();
+  const { podeAbrir } = usePermissions();
   // O menu reflete as mesmas regras do ProtectedRoute: permissões efetivas
   // (perfil + exceções) e, para Administração, a role técnica `admin`.
   const visibleItems = menuItems.filter((item) => {
     if (item.adminOnly && !isAdmin) return false;
     const modulo = (item as { modulo?: string }).modulo ?? moduleKeyForRoute(item.url);
-    return !modulo || can(modulo, "acessar");
+    return !modulo || podeAbrir(modulo);
   });
 
   return (
