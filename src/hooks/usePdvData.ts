@@ -31,7 +31,7 @@ export function usePdvSalesRows() {
   const scope = useVendorScope();
   return useQuery({
     queryKey: [...QK_ROWS, vendorScopeKey(scope)],
-    select: useCallback((rows: PdvSalesRow[]) => scope.filtrar(rows, (r) => r.vendedor), [scope]),
+    select: useCallback((rows: PdvSalesRow[]) => scope.filtrar(rows, (r) => r.vendedor, (r) => r.cliente), [scope]),
     queryFn: async (): Promise<PdvSalesRow[]> => {
       const all: PdvSalesRow[] = [];
       const size = 1000;

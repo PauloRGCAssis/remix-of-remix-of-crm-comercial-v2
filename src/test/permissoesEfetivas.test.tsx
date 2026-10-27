@@ -171,3 +171,23 @@ describe('permissões efetivas — hierarquia preservada', () => {
     expect(view.result.current.can('prospeccao')).toBe(false);
   });
 });
+
+describe('permissões efetivas — alteração de carteira na sessão', () => {
+  it('carteira alterada pelo administrador vale na releitura automática (5 min), sem recarregar', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      mocks.db.access = { ativo: true, profile_id: 'perfil-a', escopo: 'vendedores_selecionados', vendedores_autorizados: ['VENDEDOR B'], scope_id: null };
+      const { view } = setup();
+      await waitFor(() => expect(view.result.current.loading).toBe(false));
+      expect(view.result.current.canSee('VENDEDOR B')).toBe(true);
+      expect(view.result.current.canSee('VENDEDOR C')).toBe(false);
+
+      mocks.db.access = { ...mocks.db.access, vendedores_autorizados: ['VENDEDOR C'] };
+      await vi.advanceTimersByTimeAsync(5 * 60_000);
+      await waitFor(() => expect(view.result.current.canSee('VENDEDOR C')).toBe(true));
+      expect(view.result.current.canSee('VENDEDOR B')).toBe(false);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});

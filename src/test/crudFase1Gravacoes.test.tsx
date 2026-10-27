@@ -23,8 +23,9 @@ vi.mock('@/lib/crudEnforcement', () => ({ crudAtivo: (m: string) => mocks.ativos
 vi.mock('@/hooks/usePermissions', () => ({
   usePermissions: () => ({ can: (m: string, a = 'acessar') => mocks.permitidas.has(`${m}:${a}`) }),
 }));
-vi.mock('@/hooks/useClientScope', () => ({ useClientScope: () => ({ filtrarPorCliente: (r: unknown[]) => r }) }));
-vi.mock('@/hooks/useVendorScope', () => ({ useVendorScope: () => ({ filtrar: (r: unknown[]) => r }), vendorScopeKey: () => 'todos' }));
+// Escopo de empresa (sem restrição): o foco destes testes é a permissão CRUD.
+vi.mock('@/hooks/useClientScope', () => ({ useClientScope: () => ({ todos: true, filtrarRegistros: (r: unknown[]) => r, podeVerRegistro: () => true, podeVerCliente: () => true }) }));
+vi.mock('@/hooks/useVendorScope', () => ({ useVendorScope: () => ({ todos: true, semRestricao: true, filtrar: (r: unknown[]) => r, exigirEscopo: () => undefined }), vendorScopeKey: () => 'todos', ForaDoEscopoError: class extends Error {} }));
 vi.mock('sonner', () => ({ toast: mocks.toast }));
 vi.mock('@/lib/commissionImport', async (original) => ({
   ...(await original<typeof import('@/lib/commissionImport')>()),

@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, useMemo, useRef, ReactNode } from 'react';
-import { useVendorScope } from '@/hooks/useVendorScope';
+import { ForaDoEscopoError, useVendorScope } from '@/hooks/useVendorScope';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
@@ -681,17 +681,43 @@ export function CrmProvider({ children }: { children: ReactNode }) {
   const { nome: usuarioNome } = useUserRole();
   const autorAtual = scope.vendedorPadrao ?? usuarioNome ?? null;
 
+  /** Barra gravação fora da carteira com aviso; true = pode seguir. */
+  const dentroDoEscopo = useCallback((vendedores: Array<string | null | undefined>, descricao: string) => {
+    try {
+      scope.exigirEscopo(vendedores, descricao);
+      return true;
+    } catch (e) {
+      toast({ title: 'Não salvo', description: (e as Error).message, variant: 'destructive' });
+      return false;
+    }
+  }, [scope]);
+
   const addLeadScoped = useCallback(
-    (data: Partial<Lead>) =>
-      addLead({
+    (data: Partial<Lead>) => {
+      // Vendedor responsável e usuário criador são sempre do login atual
+      // quando o escopo é travado em um único vendedor.
+      const vendedor = scope.travado && scope.vendedorPadrao ? scope.vendedorPadrao : (data.vendedor || scope.vendedorPadrao || undefined);
+      if (!dentroDoEscopo([vendedor], 'leads')) throw new ForaDoEscopoError('leads');
+      return addLead({
         ...data,
-        // Vendedor responsável e usuário criador são sempre do login atual
-        // quando o escopo é travado em um único vendedor.
-        vendedor: scope.travado && scope.vendedorPadrao ? scope.vendedorPadrao : (data.vendedor || scope.vendedorPadrao || undefined),
+        vendedor,
         criado_por: data.criado_por || autorAtual || undefined,
-      }),
-    [addLead, scope.vendedorPadrao, scope.travado, autorAtual],
+      });
+    },
+    [addLead, scope.vendedorPadrao, scope.travado, autorAtual, dentroDoEscopo],
   );
+
+  const updateLeadScoped = useCallback((id: string, data: Partial<Lead>) => {
+    const atual = leads.find(l => l.id === id);
+    if (!dentroDoEscopo([atual?.vendedor, data.vendedor], 'leads')) return;
+    updateLead(id, data);
+  }, [leads, updateLead, dentroDoEscopo]);
+
+  const deleteLeadScoped = useCallback((id: string, motivo?: string) => {
+    const atual = leads.find(l => l.id === id);
+    if (!dentroDoEscopo([atual?.vendedor], 'leads')) return;
+    deleteLead(id, motivo);
+  }, [leads, deleteLead, dentroDoEscopo]);
 
 
   return (
@@ -699,7 +725,7 @@ export function CrmProvider({ children }: { children: ReactNode }) {
       // `crm_leads` e `crm_visitas` já chegam filtrados no banco pela RLS de
       // seller_id. Não reaplicar filtros textuais no cliente.
       leads, visitas, justificativas, leadsExcluidos,
-      addLead: addLeadScoped, updateLead, deleteLead, moverPipeline, agendarVisita, darFeedbackVisita,
+      addLead: addLeadScoped, updateLead: updateLeadScoped, deleteLead: deleteLeadScoped, moverPipeline, agendarVisita, darFeedbackVisita,
       concluirVisitaComResultado, reagendarVisita, updateVisita, deleteVisita, deleteVisitas,
       getVisitasByLead, getLeadById, getJustificativaById, addJustificativa, checkDuplicates,
       sincronizacao, tentarSincronizarNovamente,

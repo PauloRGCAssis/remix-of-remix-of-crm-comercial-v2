@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useVendorScope, vendorScopeKey } from "@/hooks/useVendorScope";
 import { useModuleCrud } from "@/hooks/useModuleCrud";
+import { exigirEscopoRegistros } from "@/lib/escopoGravacao";
 import { isExcludedClientName, normalizeClientName, setDynamicAliases } from "@/lib/clientNameNormalization";
 import type { ClientProfile, ClientProfileInput, Contato, ProdutoNegociadoFicha } from "@/types/clientProfile";
 
@@ -244,8 +245,10 @@ function isEmptyValue(v: any) {
  */
 export function useMergeUpdateClientProfile() {
   const qc = useQueryClient();
+  const scope = useVendorScope();
   return useMutation({
     mutationFn: async (payload: { id: string; data: Partial<ClientProfileInput> }) => {
+      await exigirEscopoRegistros(scope, "fichas de clientes", { tabela: "client_profiles", ids: [payload.id], novosVendedores: [payload.data.vendedor] });
       const { data: currentRow, error: currentErr } = await (supabase as any)
         .from("client_profiles")
         .select("*")
@@ -287,7 +290,7 @@ export function useClientProfiles() {
   const scope = useVendorScope();
   return useQuery({
     queryKey: [...QK, vendorScopeKey(scope)],
-    select: useCallback((rows: ClientProfile[]) => scope.filtrar(rows, (r) => r.vendedor ?? null), [scope]),
+    select: useCallback((rows: ClientProfile[]) => scope.filtrar(rows, (r) => r.vendedor ?? null, (r) => r.nome), [scope]),
     queryFn: async (): Promise<ClientProfile[]> => {
       await syncAliasesForProfiles();
       const { data, error } = await (supabase as any)
@@ -302,8 +305,10 @@ export function useClientProfiles() {
 
 export function useUpsertClientProfile() {
   const qc = useQueryClient();
+  const scope = useVendorScope();
   return useMutation({
     mutationFn: async (payload: { id?: string; data: ClientProfileInput }) => {
+      await exigirEscopoRegistros(scope, "fichas de clientes", { tabela: "client_profiles", ids: payload.id ? [payload.id] : [], novosVendedores: [payload.data.vendedor] });
       const row = profileToRow(payload.data);
       if (payload.id) {
         const { data, error } = await (supabase as any)
@@ -333,8 +338,10 @@ export function useUpsertClientProfile() {
  */
 export function usePatchClientProfile() {
   const qc = useQueryClient();
+  const scope = useVendorScope();
   return useMutation({
     mutationFn: async (payload: { id: string; patch: Record<string, any> }) => {
+      await exigirEscopoRegistros(scope, "fichas de clientes", { tabela: "client_profiles", ids: [payload.id], novosVendedores: [payload.patch.vendedor] });
       const { error } = await (supabase as any)
         .from("client_profiles")
         .update(payload.patch)
@@ -347,8 +354,14 @@ export function usePatchClientProfile() {
 
 export function useBulkPatchClientProfiles() {
   const qc = useQueryClient();
+  const scope = useVendorScope();
   return useMutation({
     mutationFn: async (updates: Array<{ id: string; patch: Record<string, any> }>) => {
+      await exigirEscopoRegistros(scope, "fichas de clientes", {
+        tabela: "client_profiles",
+        ids: updates.map((u) => u.id),
+        novosVendedores: updates.map((u) => u.patch.vendedor),
+      });
       for (const u of updates) {
         const { error } = await (supabase as any)
           .from("client_profiles")
@@ -366,9 +379,11 @@ export function useBulkPatchClientProfiles() {
 export function useDeleteClientProfile() {
   const qc = useQueryClient();
   const { exigir } = useModuleCrud("cadastro_clientes", "fichas de clientes");
+  const scope = useVendorScope();
   return useMutation({
     mutationFn: async (id: string) => {
       exigir("excluir"); // individual e em lote
+      await exigirEscopoRegistros(scope, "fichas de clientes", { tabela: "client_profiles", ids: [id] });
       const { error } = await (supabase as any).from("client_profiles").delete().eq("id", id);
       if (error) throw error;
     },
@@ -382,8 +397,10 @@ export function useDeleteClientProfile() {
  */
 export function useCreateClientProfilesRaw() {
   const qc = useQueryClient();
+  const scope = useVendorScope();
   return useMutation({
     mutationFn: async (rows: Array<Record<string, any>>) => {
+      await exigirEscopoRegistros(scope, "fichas de clientes", { novosVendedores: rows.map((r) => r.vendedor) });
       const created: Array<{ id: string; nome: string }> = [];
       const size = 200;
       for (let i = 0; i < rows.length; i += size) {

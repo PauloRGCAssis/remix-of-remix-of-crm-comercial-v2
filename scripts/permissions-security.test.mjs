@@ -25,6 +25,7 @@ for (const scenario of [
       useUserRole: () => ({ userId: scenario.session === false ? null : 'test', isGestor: !!scenario.admin, vendedor: 'A', vendedores: ['A'], loading: !!scenario.loading, verified: scenario.verified !== false }),
       useQuery: () => ({ isSuccess: !scenario.error, isLoading: !!scenario.loading, data: { access: scenario.missing ? null : { ativo: !scenario.inactive, escopo: 'meus_dados' }, profilePerms: ['acessar', 'visualizar', 'criar', 'editar', 'excluir'].map(acao => ({ modulo: 'prospeccao', acao, permitido: true })), userPerms: scenario.override === false ? ['acessar', 'visualizar', 'criar', 'editar', 'excluir'].map(acao => ({ modulo: 'prospeccao', acao, permitido: false })) : [] } }),
       normalizeVendorName: (value) => value,
+      RELEITURA_ACESSO_MS: 300000,
       sameVendor: (left, right) => left === right,
     };
     vm.createContext(context);

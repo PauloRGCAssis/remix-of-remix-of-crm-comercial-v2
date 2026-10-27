@@ -15,7 +15,7 @@ vi.mock("@/integrations/supabase/client", () => ({
 }));
 vi.mock("@/contexts/AuthContext", () => ({ useAuth: () => mocks.auth }));
 vi.mock("@/hooks/useUserRole", () => ({ useUserRole: () => ({ nome: "Usuário Fictício" }) }));
-vi.mock("@/hooks/useVendorScope", () => ({ useVendorScope: () => ({ vendedorPadrao: "VENDEDOR A", travado: true }) }));
+vi.mock("@/hooks/useVendorScope", () => ({ useVendorScope: () => ({ vendedorPadrao: "VENDEDOR A", travado: true, exigirEscopo: () => undefined }) }));
 vi.mock("@/hooks/use-toast", () => ({ toast: (t: { title: string; variant?: string }) => mocks.toasts.push(t) }));
 
 import { CrmProvider, useCrm } from "@/contexts/CrmContext";

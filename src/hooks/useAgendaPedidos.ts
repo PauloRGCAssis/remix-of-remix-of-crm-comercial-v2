@@ -5,6 +5,7 @@ import { normalizeClientName } from "@/lib/clientNameNormalization";
 import { startOfWeek, format } from "date-fns";
 import { useClientScope } from "@/hooks/useClientScope";
 import { useVendorScope } from "@/hooks/useVendorScope";
+import { exigirEscopoRegistros } from "@/lib/escopoGravacao";
 import { useUserRole } from "@/hooks/useUserRole";
 
 export interface OrderClient {
@@ -47,6 +48,8 @@ export function useAgendaPedidos(selectedWeekMonday?: string) {
   };
   const scopeRef = useRef(clientScope);
   scopeRef.current = clientScope;
+  const vendorScopeRef = useRef(vendorScope);
+  vendorScopeRef.current = vendorScope;
   const [logs, setLogs] = useState<WeeklyLog[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -63,7 +66,7 @@ export function useAgendaPedidos(selectedWeekMonday?: string) {
       supabase.from("order_schedule_weekly_log").select("*"),
     ]);
     const rows = (cRes.data ?? []) as unknown as OrderClient[];
-    setClients(scopeRef.current.filtrarPorCliente(rows, (c) => c.nome));
+    setClients(scopeRef.current.filtrarRegistros(rows, (c) => c.vendedor, (c) => c.nome));
     if (lRes.data) setLogs(lRes.data as unknown as WeeklyLog[]);
     setLoading(false);
   }, []);
@@ -71,6 +74,17 @@ export function useAgendaPedidos(selectedWeekMonday?: string) {
   useEffect(() => { fetchAll(); }, [fetchAll, clientScope]);
 
   const upsertClient = useCallback(async (client: Partial<OrderClient> & { nome: string }) => {
+    try {
+      await exigirEscopoRegistros(vendorScopeRef.current, "clientes da agenda de pedidos", {
+        tabela: "order_schedule_clients",
+        ids: client.id ? [client.id] : [],
+        campoCliente: "nome",
+        podeVerRegistro: scopeRef.current.podeVerRegistro,
+      });
+    } catch (e) {
+      toast({ title: "Não salvo", description: (e as Error).message, variant: "destructive" });
+      return;
+    }
     if (client.id) {
       await supabase.from("order_schedule_clients").update({
         nome: client.nome,

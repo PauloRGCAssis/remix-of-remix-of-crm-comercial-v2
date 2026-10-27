@@ -2,6 +2,10 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { AccessDeniedError } from "@/lib/accessDeniedError";
+import { shortVendedorName } from "@/lib/vendorRegistry";
+
+/** Releitura periódica do acesso: mudança de carteira vale sem recarregar a página. */
+export const RELEITURA_ACESSO_MS = 5 * 60_000;
 
 export interface UserAccess {
   deniedReason: 'missing' | 'inactive' | null;
@@ -32,13 +36,19 @@ export function normalizeVendorName(value?: string | null): string {
     .toUpperCase();
 }
 
-/** Compara dois nomes de vendedor de forma tolerante (nome completo x primeiro nome). */
+/**
+ * Compara dois nomes de vendedor de forma tolerante (nome completo x primeiro
+ * nome). O prefixo só vale quando os dois são o mesmo vendedor no cadastro
+ * oficial (`shortVendedorName`): "Juliano" = "Juliano Carneiro", mas
+ * "João" ≠ "João Paulo". Nunca amplia além da regra anterior.
+ */
 export function sameVendor(a?: string | null, b?: string | null): boolean {
   const na = normalizeVendorName(a);
   const nb = normalizeVendorName(b);
   if (!na || !nb) return false;
   if (na === nb) return true;
-  return na.startsWith(`${nb} `) || nb.startsWith(`${na} `);
+  const prefixo = na.startsWith(`${nb} `) || nb.startsWith(`${na} `);
+  return prefixo && normalizeVendorName(shortVendedorName(na)) === normalizeVendorName(shortVendedorName(nb));
 }
 
 export function useUserRole(): UserAccess {
@@ -49,6 +59,7 @@ export function useUserRole(): UserAccess {
     queryKey: ["user-access", userId, authorizationVersion],
     retry: (count, error) => !(error instanceof AccessDeniedError) && count < 1,
     enabled: !!userId,
+    refetchInterval: RELEITURA_ACESSO_MS,
     queryFn: async ({ signal }) => {
       const controller = new AbortController();
       const abort = () => controller.abort();

@@ -2,6 +2,8 @@ import { useCallback } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useClientScope } from "@/hooks/useClientScope";
 import { useModuleCrud } from "@/hooks/useModuleCrud";
+import { ForaDoEscopoError, useVendorScope } from "@/hooks/useVendorScope";
+import { exigirEscopoRegistros } from "@/lib/escopoGravacao";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -23,6 +25,8 @@ export interface CommercialAction {
   id: string;
   client_profile_id: string | null;
   cliente: string;
+  /** Vendedor responsável (coluna do banco); null = registro legado. */
+  vendedor?: string | null;
   nome: string;
   tipo: string;
   data_inicio: string;
@@ -206,12 +210,13 @@ export function useCommercialActionHistory(actionId?: string) {
 export function useCommercialActions() {
   const qc = useQueryClient();
   const clientScope = useClientScope();
+  const scope = useVendorScope();
   const { exigir } = useModuleCrud("acoes_comerciais", "ações comerciais");
 
   const list = useQuery({
     queryKey: QK,
     select: useCallback(
-      (rows: CommercialAction[]) => clientScope.filtrarPorCliente(rows, (r) => r.cliente),
+      (rows: CommercialAction[]) => clientScope.filtrarRegistros(rows, (r) => r.vendedor, (r) => r.cliente),
       [clientScope],
     ),
     queryFn: async () => {
@@ -231,6 +236,10 @@ export function useCommercialActions() {
     ) => {
       exigir("criar"); // inclui duplicar e copiar para vários clientes
       const { copiadaDe, ...payload } = input as any;
+      await exigirEscopoRegistros(scope, "ações comerciais", { novosVendedores: [payload.vendedor] });
+      if (!payload.vendedor && !clientScope.podeVerRegistro(null, payload.cliente)) {
+        throw new ForaDoEscopoError("ações comerciais");
+      }
       const autor = await currentUserLabel();
       const { data, error } = await (supabase as any)
         .from("commercial_actions")
@@ -274,6 +283,7 @@ export function useCommercialActions() {
       before?: CommercialAction;
     }) => {
       exigir("editar"); // inclui alteração de status
+      await exigirEscopoRegistros(scope, "ações comerciais", { ...{ tabela: "commercial_actions", ids: [id], campoCliente: "cliente", podeVerRegistro: clientScope.podeVerRegistro }, novosVendedores: [(patch as { vendedor?: string | null }).vendedor] });
       const autor = await currentUserLabel();
       const { error } = await (supabase as any)
         .from("commercial_actions")
@@ -301,6 +311,7 @@ export function useCommercialActions() {
   const remove = useMutation({
     mutationFn: async (id: string) => {
       exigir("excluir");
+      await exigirEscopoRegistros(scope, "ações comerciais", { tabela: "commercial_actions", ids: [id], campoCliente: "cliente", podeVerRegistro: clientScope.podeVerRegistro });
       const { error } = await (supabase as any).from("commercial_actions").delete().eq("id", id);
       if (error) throw error;
     },

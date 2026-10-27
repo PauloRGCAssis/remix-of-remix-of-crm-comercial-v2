@@ -2,6 +2,8 @@ import { useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useClientScope } from "@/hooks/useClientScope";
 import { useModuleCrud } from "@/hooks/useModuleCrud";
+import { ForaDoEscopoError, useVendorScope } from "@/hooks/useVendorScope";
+import { exigirEscopoRegistros } from "@/lib/escopoGravacao";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { normalizePromotoras, type PromotoraItem } from "@/lib/degustacaoPromotoras";
@@ -17,6 +19,8 @@ export interface DegustacaoProduto {
 export interface Degustacao {
   id: string;
   cliente: string;
+  /** Vendedor responsável (coluna do banco); null = registro legado. */
+  vendedor?: string | null;
   contato_cliente: string | null;
   endereco: string | null;
   bairro: string | null;
@@ -56,12 +60,13 @@ function normalize(row: any): Degustacao {
 export function useDegustacoes() {
   const qc = useQueryClient();
   const clientScope = useClientScope();
+  const scope = useVendorScope();
   const { exigir } = useModuleCrud("degustacoes", "degustações");
 
   const list = useQuery({
     queryKey: QK,
     select: useCallback(
-      (rows: Degustacao[]) => clientScope.filtrarPorCliente(rows, (r) => r.cliente),
+      (rows: Degustacao[]) => clientScope.filtrarRegistros(rows, (r) => r.vendedor, (r) => r.cliente),
       [clientScope],
     ),
     queryFn: async () => {
@@ -78,6 +83,8 @@ export function useDegustacoes() {
   const create = useMutation({
     mutationFn: async (input: DegustacaoInput) => {
       exigir("criar");
+      await exigirEscopoRegistros(scope, "degustações", { novosVendedores: [input as { vendedor?: string | null; cliente: string }].map((r) => r.vendedor) });
+      if ([input as { vendedor?: string | null; cliente: string }].some((r) => !r.vendedor && !clientScope.podeVerRegistro(null, r.cliente))) throw new ForaDoEscopoError("degustações");
       const { data, error } = await supabase
         .from("degustacoes")
         .insert(input as any)
@@ -96,6 +103,7 @@ export function useDegustacoes() {
   const update = useMutation({
     mutationFn: async ({ id, patch }: { id: string; patch: Partial<DegustacaoInput> }) => {
       exigir("editar"); // inclui status e confirmação
+      await exigirEscopoRegistros(scope, "degustações", { ...{ tabela: "degustacoes", ids: [id], campoCliente: "cliente", podeVerRegistro: clientScope.podeVerRegistro }, novosVendedores: [(patch as { vendedor?: string | null }).vendedor] });
       const { error } = await supabase.from("degustacoes").update(patch as any).eq("id", id);
       if (error) throw error;
     },
@@ -109,6 +117,7 @@ export function useDegustacoes() {
   const remove = useMutation({
     mutationFn: async (id: string) => {
       exigir("excluir");
+      await exigirEscopoRegistros(scope, "degustações", { tabela: "degustacoes", ids: [id], campoCliente: "cliente", podeVerRegistro: clientScope.podeVerRegistro });
       const { error } = await supabase.from("degustacoes").delete().eq("id", id);
       if (error) throw error;
     },
@@ -123,6 +132,8 @@ export function useDegustacoes() {
     mutationFn: async (rows: DegustacaoInput[]) => {
       exigir("criar"); // duplicação em lote
       if (!rows.length) return [] as Degustacao[];
+      await exigirEscopoRegistros(scope, "degustações", { novosVendedores: (rows as Array<{ vendedor?: string | null; cliente: string }>).map((r) => r.vendedor) });
+      if ((rows as Array<{ vendedor?: string | null; cliente: string }>).some((r) => !r.vendedor && !clientScope.podeVerRegistro(null, r.cliente))) throw new ForaDoEscopoError("degustações");
       const { data, error } = await supabase.from("degustacoes").insert(rows as any).select();
       if (error) throw error;
       return (data ?? []).map(normalize);
@@ -138,6 +149,7 @@ export function useDegustacoes() {
     mutationFn: async ({ ids, status }: { ids: string[]; status: DegustacaoStatus }) => {
       exigir("editar");
       if (!ids.length) return 0;
+      await exigirEscopoRegistros(scope, "degustações", { tabela: "degustacoes", ids, campoCliente: "cliente", podeVerRegistro: clientScope.podeVerRegistro });
       const { error } = await supabase.from("degustacoes").update({ status }).in("id", ids);
       if (error) throw error;
       return ids.length;

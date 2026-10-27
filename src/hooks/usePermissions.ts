@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useUserRole, normalizeVendorName, sameVendor } from "@/hooks/useUserRole";
+import { useUserRole, normalizeVendorName, sameVendor, RELEITURA_ACESSO_MS } from "@/hooks/useUserRole";
 import { exigeVisualizar, type PermissionAction } from "@/lib/modulesCatalog";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -36,9 +36,12 @@ export interface PermissionsState {
   escopoPersonalizado: ResolvedScope | null;
   /** Vendedores que o usuário pode enxergar; `null` = todos. */
   vendedoresPermitidos: string[] | null;
-  /** Clientes/grupos permitidos pelo escopo personalizado; `null` = sem restrição. */
+  /** Clientes permitidos pelo escopo personalizado; `null` = sem restrição. */
   clientesPermitidos: string[] | null;
+  /** Regiões (campo `regiao` da ficha) permitidas; `null` = sem restrição. */
   regioesPermitidas: string[] | null;
+  /** Escopo com grupos econômicos: bloqueia dados de clientes (sem vínculo no banco). */
+  gruposBloqueiam: boolean;
   /** Nome do perfil de permissão atribuído ao usuário (quando houver). */
   perfilNome: string | null;
   /** IA liberada pela matriz: `inteligencia` + `inteligencia.central_analise` (ou role admin). */
@@ -62,6 +65,7 @@ export function usePermissions(): PermissionsState {
   const query = useQuery({
     queryKey: ["user-permissions", userId, authorizationVersion],
     enabled: !!userId,
+    refetchInterval: RELEITURA_ACESSO_MS,
     queryFn: async () => {
       const [accessRes, userPermsRes] = await Promise.all([
         supabase.from("user_access").select("*").eq("user_id", userId!).maybeSingle(),
@@ -178,12 +182,13 @@ export function usePermissions(): PermissionsState {
   const clientesPermitidos = useMemo(() => {
     if (!ativo) return [];
     if (isGestor) return null;
-    const list = [
-      ...(escopoPersonalizado?.clientes ?? []),
-      ...(escopoPersonalizado?.grupos_economicos ?? []),
-    ].filter(Boolean);
+    const list = (escopoPersonalizado?.clientes ?? []).filter(Boolean);
     return list.length ? Array.from(new Set(list)) : null;
   }, [ativo, isGestor, escopoPersonalizado]);
+
+  // Grupos econômicos ainda não têm vínculo no banco: um escopo que os use
+  // bloqueia os dados de clientes em vez de liberar tudo.
+  const gruposBloqueiam = !isGestor && (escopoPersonalizado?.grupos_economicos ?? []).some(Boolean);
 
   const regioesPermitidas = useMemo(() => {
     if (!ativo) return [];
@@ -214,6 +219,7 @@ export function usePermissions(): PermissionsState {
     vendedoresPermitidos,
     clientesPermitidos,
     regioesPermitidas,
+    gruposBloqueiam,
     can,
     podeAbrir,
     canSee,

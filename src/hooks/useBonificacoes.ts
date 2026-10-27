@@ -3,6 +3,7 @@ import { useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useVendorScope, vendorScopeKey } from "@/hooks/useVendorScope";
 import { useModuleCrud } from "@/hooks/useModuleCrud";
+import { exigirEscopoRegistros } from "@/lib/escopoGravacao";
 import { normKey, type BonificacaoCadastro, type BonificacaoRow } from "@/lib/bonificacaoLogic";
 import { isBonificacao, type CommissionBatch, type CommissionRow } from "@/lib/commissionImport";
 
@@ -10,7 +11,7 @@ export function useBonificacaoCadastro() {
   const scope = useVendorScope();
   return useQuery({
     queryKey: ["bonificacao_cadastro", vendorScopeKey(scope)],
-    select: useCallback((rows: BonificacaoCadastro[]) => scope.filtrar(rows, (r) => r.vendedor ?? null), [scope]),
+    select: useCallback((rows: BonificacaoCadastro[]) => scope.filtrar(rows, (r) => r.vendedor ?? null, (r) => r.cliente), [scope]),
     queryFn: async (): Promise<BonificacaoCadastro[]> => {
       const { data, error } = await (supabase as any)
         .from("bonificacao_cadastro")
@@ -35,7 +36,7 @@ export function useBonificacaoRows() {
   const scope = useVendorScope();
   return useQuery({
     queryKey: ["bonificacao_rows", vendorScopeKey(scope)],
-    select: useCallback((rows: BonificacaoRow[]) => scope.filtrar(rows, (r) => r.vendedor ?? null), [scope]),
+    select: useCallback((rows: BonificacaoRow[]) => scope.filtrar(rows, (r) => r.vendedor ?? null, (r) => r.cliente), [scope]),
     queryFn: async (): Promise<BonificacaoRow[]> => {
       const pageSize = 1000;
       const out: BonificacaoRow[] = [];
@@ -124,6 +125,7 @@ export function useBonificacaoMutations() {
 
   const qc = useQueryClient();
   const { exigir } = useModuleCrud("bonificacoes", "bonificações");
+  const scope = useVendorScope();
   const invalidate = () => {
     qc.invalidateQueries({ queryKey: ["bonificacao_cadastro"] });
     qc.invalidateQueries({ queryKey: ["bonificacao_rows"] });
@@ -137,6 +139,18 @@ export function useBonificacaoMutations() {
         cliente_key: normKey(input.cliente),
         produto_key: normKey(input.produto),
       };
+      // O upsert pode cair sobre um cadastro existente (mesmo cliente/produto) de outra carteira.
+      const { data: existentes, error: existentesErr } = await (supabase as any)
+        .from("bonificacao_cadastro")
+        .select("id")
+        .eq("cliente_key", payload.cliente_key)
+        .eq("produto_key", payload.produto_key);
+      if (existentesErr) throw existentesErr;
+      await exigirEscopoRegistros(scope, "bonificações", {
+        tabela: "bonificacao_cadastro",
+        ids: ((existentes ?? []) as { id: string }[]).map((r) => r.id),
+        novosVendedores: [input.vendedor],
+      });
       const { error } = await (supabase as any)
         .from("bonificacao_cadastro")
         .upsert(payload, { onConflict: "cliente_key,produto_key" });
@@ -148,6 +162,7 @@ export function useBonificacaoMutations() {
   const excluirCadastro = useMutation({
     mutationFn: async (id: string) => {
       exigir("excluir");
+      await exigirEscopoRegistros(scope, "bonificações", { tabela: "bonificacao_cadastro", ids: [id] });
       const { error } = await (supabase as any).from("bonificacao_cadastro").update({ ativo: false }).eq("id", id);
       if (error) throw error;
     },
@@ -159,6 +174,7 @@ export function useBonificacaoMutations() {
     mutationFn: async (ids: string[]) => {
       exigir("excluir");
       if (!ids.length) return;
+      await exigirEscopoRegistros(scope, "bonificações", { tabela: "bonificacao_cadastro", ids });
       const { error } = await (supabase as any).from("bonificacao_cadastro").update({ ativo: false }).in("id", ids);
       if (error) throw error;
     },
@@ -178,6 +194,11 @@ export function useBonificacaoMutations() {
       precos?: Record<string, number>;
     }) => {
       exigir("editar");
+      await exigirEscopoRegistros(scope, "bonificações", {
+        tabela: "bonificacao_cadastro",
+        ids: [...input.ids, ...Object.keys(input.precos ?? {})],
+        novosVendedores: [input.vendedor],
+      });
       const patch: Record<string, unknown> = { pct_negociacao: input.pct_negociacao };
       if (input.vendedor !== undefined) patch.vendedor = input.vendedor;
       if (input.observacoes !== undefined) patch.observacoes = input.observacoes;

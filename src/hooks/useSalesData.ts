@@ -124,7 +124,7 @@ export function useSalesData() {
 
   return useQuery({
     queryKey: ["sales-data", "sales-raw-rows-v1", "no-cache-v1", scopeKey],
-    select: useCallback((rows: SaleRow[]) => scope.filtrar(rows, (r) => r.vendedor), [scope]),
+    select: useCallback((rows: SaleRow[]) => scope.filtrar(rows, (r) => r.vendedor, (r) => r.cliente), [scope]),
 
 
     queryFn: async () => {
