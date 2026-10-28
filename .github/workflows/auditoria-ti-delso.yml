@@ -35,6 +35,7 @@ jobs:
         run: |
           node --test scripts/permissions-security.test.mjs
           node --test scripts/admin-users-security.test.mjs
+          node --test scripts/import-security.test.mjs
         if: success() || failure()
       - name: Verificar build
         if: success() || failure()
