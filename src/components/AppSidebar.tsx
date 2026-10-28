@@ -90,7 +90,7 @@ export function AppSidebar() {
           />
           {!collapsed && (
             <div className="min-w-0">
-              <h2 className="text-sm font-bold text-sidebar-primary-foreground font-heading truncate">
+              <h2 className="text-sm font-bold text-sidebar-foreground font-heading truncate">
                 Ti Delso
               </h2>
               <p className="text-xs text-sidebar-foreground/75 truncate">
@@ -132,7 +132,7 @@ export function AppSidebar() {
       <SidebarFooter className="p-4 space-y-2">
         <LogoutButton collapsed={collapsed} />
         {!collapsed && (
-          <p className="text-[10px] text-sidebar-foreground/50 text-center">
+          <p className="text-[10px] text-sidebar-foreground/60 text-center">
             Pão de Queijo Ti Delso © 2026
           </p>
         )}

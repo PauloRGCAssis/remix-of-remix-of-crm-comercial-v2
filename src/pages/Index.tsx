@@ -88,7 +88,7 @@ interface ContextProps {
 }
 function ContextStrip({ scope, period, comparison, extra }: ContextProps) {
   return (
-    <div className="flex flex-wrap items-center gap-1.5 text-[11px] text-muted-foreground mt-1">
+    <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground mt-1">
       <Badge variant="secondary" className="font-normal">
         <Building2 className="h-3 w-3 mr-1" />
         {scope}
@@ -563,7 +563,7 @@ export default function Dashboard() {
                                 ? "Zerou as compras no período atual"
                                 : `Queda de ${Math.abs(Math.round(a.variacao))}% no faturamento`}
                             </p>
-                            <p className="text-[11px] text-muted-foreground mt-0.5">
+                            <p className="text-xs text-muted-foreground mt-0.5">
                               {compLabel}: {fmtCurrency(a.fatComp)} → {periodLabel}: {fmtCurrency(a.fatAtual)}
                             </p>
                           </div>
@@ -630,7 +630,7 @@ export default function Dashboard() {
                           <p className="text-sm font-semibold">
                             {fmtNumber(Math.round(p.volume))} kg
                           </p>
-                          <p className="text-[11px] text-muted-foreground">
+                          <p className="text-xs text-muted-foreground">
                             {fmtCurrency(p.faturamento)}
                           </p>
                         </div>

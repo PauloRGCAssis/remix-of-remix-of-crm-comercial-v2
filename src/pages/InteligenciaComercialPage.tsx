@@ -78,14 +78,14 @@ function KpiBoxComparativo({ title, atualValue, compValue, variation, diff, icon
     <Card>
       <CardContent className="p-4">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">{title}</span>
+          <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{title}</span>
           <Icon className="h-4 w-4 text-muted-foreground" />
         </div>
         <p className="text-xl font-bold">{atualValue}</p>
         {compValue && (
           <div className="mt-1.5 space-y-0.5">
-            <p className="text-[11px] text-muted-foreground">Comparado: {compValue}</p>
-            {diff && <p className="text-[11px] text-muted-foreground">Diferença: {diff}</p>}
+            <p className="text-xs text-muted-foreground">Comparado: {compValue}</p>
+            {diff && <p className="text-xs text-muted-foreground">Diferença: {diff}</p>}
             {variation !== undefined && <VariationIndicator value={variation ?? null} />}
           </div>
         )}
@@ -167,7 +167,7 @@ function MixProdutosCard({ mixProdutos, fatTotal }: { mixProdutos: { nome: strin
                   <span className="w-3 h-3 mt-0.5 rounded-sm flex-shrink-0" style={{ background: COLORS[i % COLORS.length] }} />
                   <div className="flex-1 min-w-0">
                     <p className="truncate" title={d.nome}>{d.nome}</p>
-                    <p className="text-[10px] text-muted-foreground">{R$(d.fat)} · {d.pct.toFixed(1)}%</p>
+                    <p className="text-xs text-muted-foreground">{R$(d.fat)} · {d.pct.toFixed(1)}%</p>
                   </div>
                 </div>
               ))}
@@ -438,7 +438,7 @@ export default function InteligenciaComercialPage() {
                     <TooltipProvider delayDuration={150}>
                       <UiTooltip>
                         <TooltipTrigger asChild>
-                          <p className="inline-flex items-center gap-1 text-[11px] text-muted-foreground cursor-help">
+                          <p className="inline-flex items-center gap-1 text-xs text-muted-foreground cursor-help">
                             <Info className="h-3 w-3" />
                             <span>Dados considerados: {continuousRangeLabel}</span>
                           </p>
@@ -449,7 +449,7 @@ export default function InteligenciaComercialPage() {
                       </UiTooltip>
                     </TooltipProvider>
                   )}
-                  <p className="text-[11px] text-muted-foreground">Comparativo desativado — análise por evolução do período.</p>
+                  <p className="text-xs text-muted-foreground">Comparativo desativado — análise por evolução do período.</p>
                 </div>
               )}
             </div>
@@ -476,7 +476,7 @@ export default function InteligenciaComercialPage() {
                     {vendedores.filter(v => v && v.trim() !== "").map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}
                   </SelectContent>
                 </Select>
-                <p className="text-[10px] text-muted-foreground mt-1" title={vendedores.join(", ")}>
+                <p className="text-xs text-muted-foreground mt-1" title={vendedores.join(", ")}>
                   {vendedores.length} vendedores na base: {vendedores.slice(0, 6).join(", ")}{vendedores.length > 6 ? "…" : ""}
                 </p>
               </div>
@@ -495,7 +495,7 @@ export default function InteligenciaComercialPage() {
                   closeOnSelect={false}
                   className="min-h-9"
                 />
-                <p className="text-[10px] text-muted-foreground mt-1">
+                <p className="text-xs text-muted-foreground mt-1">
                   {(filters.clientes?.length ?? 0) === 0
                     ? `${clientesOptions.length} clientes na base`
                     : `${filters.clientes!.length} selecionado${filters.clientes!.length > 1 ? "s" : ""}`}
@@ -515,7 +515,7 @@ export default function InteligenciaComercialPage() {
                   selectionMode="multiple"
                   className="min-h-9"
                 />
-                <p className="text-[10px] text-muted-foreground mt-1">
+                <p className="text-xs text-muted-foreground mt-1">
                   {(filters.produtos?.length ?? 0) === 0
                     ? `${produtos.length} produtos na linha Ti Delso`
                     : `${filters.produtos!.length} selecionado${filters.produtos!.length > 1 ? "s" : ""} (lógica OR)`}
@@ -553,7 +553,7 @@ export default function InteligenciaComercialPage() {
                 <TabsTrigger value="alertas">
                   Alertas
                   {data.alertas.length > 0 && (
-                    <Badge variant="destructive" className="ml-1 text-[10px] px-1.5">{data.alertas.length}</Badge>
+                    <Badge variant="destructive" className="ml-1 text-xs px-1.5">{data.alertas.length}</Badge>
                   )}
                 </TabsTrigger>
               )}
@@ -647,13 +647,13 @@ export default function InteligenciaComercialPage() {
                         className="rounded hover:bg-success/10 transition cursor-pointer"
                       >
                         <p className="text-lg font-bold text-green-600 underline-offset-2 hover:underline">{data.clientesNovos.length}</p>
-                        <p className="text-[10px] text-muted-foreground">Novos</p>
+                        <p className="text-xs text-muted-foreground">Novos</p>
                       </button>
-                      <div title={`Já compraram antes e ficaram ≥ ${data.reativacaoDiasSemCompra} dias sem comprar`}><p className="text-lg font-bold text-blue-600">{data.clientesReativados.length}</p><p className="text-[10px] text-muted-foreground">Reativados</p></div>
-                      <div title={`Já compraram antes e voltaram em < ${data.reativacaoDiasSemCompra} dias`}><p className="text-lg font-bold text-slate-600">{data.clientesRecorrentes.length}</p><p className="text-[10px] text-muted-foreground">Recorrentes</p></div>
-                      <div title="Compraram no período comparado mas não no atual"><p className="text-lg font-bold text-red-500">{data.clientesPerdidos.length}</p><p className="text-[10px] text-muted-foreground">Perdidos</p></div>
-                      <div title="Sem compras há mais de 30 dias"><p className="text-lg font-bold text-amber-600">{data.clientesInativos.length}</p><p className="text-[10px] text-muted-foreground">Inativos</p></div>
-                      <div><p className="text-lg font-bold">{data.decomposition.clientesAtivosAtual}</p><p className="text-[10px] text-muted-foreground">Ativos</p></div>
+                      <div title={`Já compraram antes e ficaram ≥ ${data.reativacaoDiasSemCompra} dias sem comprar`}><p className="text-lg font-bold text-blue-600">{data.clientesReativados.length}</p><p className="text-xs text-muted-foreground">Reativados</p></div>
+                      <div title={`Já compraram antes e voltaram em < ${data.reativacaoDiasSemCompra} dias`}><p className="text-lg font-bold text-slate-600">{data.clientesRecorrentes.length}</p><p className="text-xs text-muted-foreground">Recorrentes</p></div>
+                      <div title="Compraram no período comparado mas não no atual"><p className="text-lg font-bold text-red-500">{data.clientesPerdidos.length}</p><p className="text-xs text-muted-foreground">Perdidos</p></div>
+                      <div title="Sem compras há mais de 30 dias"><p className="text-lg font-bold text-amber-600">{data.clientesInativos.length}</p><p className="text-xs text-muted-foreground">Inativos</p></div>
+                      <div><p className="text-lg font-bold">{data.decomposition.clientesAtivosAtual}</p><p className="text-xs text-muted-foreground">Ativos</p></div>
                     </div>
                   </CardContent>
                 </Card>
@@ -707,14 +707,14 @@ export default function InteligenciaComercialPage() {
                             <ClipboardCheck className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
                             <div>
                               <p className="text-xs font-semibold">Dashboard espelhando linhas importadas</p>
-                              <p className="text-[11px] text-muted-foreground mt-1">Faturamento = soma direta de Preço Venda Total (R$) na tabela bruta, respeitando somente os filtros visíveis.</p>
+                              <p className="text-xs text-muted-foreground mt-1">Faturamento = soma direta de Preço Venda Total (R$) na tabela bruta, respeitando somente os filtros visíveis.</p>
                             </div>
                           </div>
                           <Button variant="outline" size="sm" className="gap-2 text-xs" onClick={exportCalculationRows} disabled={!data.linhasUsadasNoCalculo.length}>
                             <Download className="h-3.5 w-3.5" /> Exportar linhas usadas no cálculo
                           </Button>
                         </div>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 text-[11px]">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 text-xs">
                           <div><p className="text-muted-foreground">Total de linhas da planilha</p><p className="font-bold">{data.rawMirrorAudit.totalLinhasPlanilha.toLocaleString("pt-BR")}</p></div>
                           <div><p className="text-muted-foreground">Total de linhas importadas</p><p className="font-bold">{data.rawMirrorAudit.totalLinhasImportadas.toLocaleString("pt-BR")}</p></div>
                           <div><p className="text-muted-foreground">Linhas consideradas no filtro</p><p className="font-bold">{data.rawMirrorAudit.linhasUsadasNoCalculo.toLocaleString("pt-BR")}</p></div>
@@ -723,13 +723,13 @@ export default function InteligenciaComercialPage() {
                         </div>
                         <div className="rounded-md border border-amber-300 bg-amber-50 p-3 space-y-2">
                           <p className="text-xs font-semibold text-amber-900">Comparação com SIGE (debug)</p>
-                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px] text-amber-900">
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs text-amber-900">
                             <div><p className="opacity-70">Linhas no período (bruto)</p><p className="font-bold text-sm">{data.rawMirrorAudit.linhasBrutoPeriodo.toLocaleString("pt-BR")}</p></div>
                             <div><p className="opacity-70">Linhas ignoradas</p><p className="font-bold text-sm">{data.rawMirrorAudit.linhasIgnoradasNoCalculo.toLocaleString("pt-BR")}</p></div>
                             <div><p className="opacity-70">Pedidos únicos</p><p className="font-bold text-sm">{data.rawMirrorAudit.pedidosUnicos.toLocaleString("pt-BR")}</p></div>
                             <div><p className="opacity-70">Clientes únicos</p><p className="font-bold text-sm">{data.rawMirrorAudit.clientesUnicos.toLocaleString("pt-BR")}</p></div>
                           </div>
-                          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2 text-[10px] text-amber-900/90 border-t border-amber-200 pt-2">
+                          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2 text-xs text-amber-900/90 border-t border-amber-200 pt-2">
                             <div><p className="opacity-70">Vendedor vazio</p><p className="font-bold">{data.rawMirrorAudit.linhasComVendedorVazioPeriodo.toLocaleString("pt-BR")}</p></div>
                             <div><p className="opacity-70">Produto vazio</p><p className="font-bold">{data.rawMirrorAudit.linhasComProdutoVazioPeriodo.toLocaleString("pt-BR")}</p></div>
                             <div><p className="opacity-70">Cliente vazio</p><p className="font-bold">{data.rawMirrorAudit.linhasComClienteVazioPeriodo.toLocaleString("pt-BR")}</p></div>
@@ -737,12 +737,12 @@ export default function InteligenciaComercialPage() {
                             <div><p className="opacity-70">Cód. venda repetidos</p><p className="font-bold">{data.rawMirrorAudit.codigosVendaRepetidosPeriodo.toLocaleString("pt-BR")}</p></div>
                             <div><p className="opacity-70">Duplicatas exatas</p><p className="font-bold">{data.rawMirrorAudit.duplicatasExatasPeriodo.toLocaleString("pt-BR")}</p></div>
                           </div>
-                          <p className="text-[10px] text-amber-900/80">
+                          <p className="text-xs text-amber-900/80">
                             Faturamento = SUM("Preço Venda Total (R$)") das linhas no período, respeitando os filtros visíveis. Não há deduplicação por Código Venda; quando há auditoria de duplicata, a chave é Código Venda + Produto + Cliente + Quantidade + Valor.
                           </p>
                           {data.rawMirrorAudit.linhasIgnoradas.length > 0 && (
                             <div className="sheet-table overflow-auto max-h-64 border border-amber-200 rounded bg-white">
-                              <table className="w-full text-[11px]">
+                              <table className="w-full text-xs">
                                 <thead className="bg-amber-100 sticky top-0">
                                   <tr>
                                     <th className="text-left px-2 py-1">Código</th>
@@ -772,7 +772,7 @@ export default function InteligenciaComercialPage() {
                           )}
                           {data.rawMirrorAudit.vendorBreakdownPeriodo.length > 0 && (
                             <div className="sheet-table overflow-auto max-h-64 border border-amber-200 rounded bg-white">
-                              <table className="w-full text-[11px]">
+                              <table className="w-full text-xs">
                                 <thead className="bg-amber-100 sticky top-0">
                                   <tr>
                                     <th className="text-left px-2 py-1">Vendedor (planilha)</th>
@@ -803,7 +803,7 @@ export default function InteligenciaComercialPage() {
                             </div>
                           )}
                         </div>
-                        <div className="text-[11px] text-muted-foreground">
+                        <div className="text-xs text-muted-foreground">
                           Arquivo: {data.rawMirrorAudit.arquivoMaisRecente ?? "—"} · Importação: {data.rawMirrorAudit.importacaoMaisRecente ? new Date(data.rawMirrorAudit.importacaoMaisRecente).toLocaleString("pt-BR") : "—"}
                         </div>
                       </div>
@@ -891,7 +891,7 @@ export default function InteligenciaComercialPage() {
                             <span className="mt-0.5">📊</span>
                             <span className="flex-1 underline decoration-dotted">{f}</span>
                             <Search className="h-3.5 w-3.5 mt-0.5 opacity-60" />
-                            <span className="text-[11px] text-muted-foreground mt-0.5 whitespace-nowrap">Ver detalhes</span>
+                            <span className="text-xs text-muted-foreground mt-0.5 whitespace-nowrap">Ver detalhes</span>
                           </button>
                         );
                       }
@@ -1016,7 +1016,7 @@ export default function InteligenciaComercialPage() {
                   <CardHeader className="pb-2">
                     <CardTitle className="text-sm flex items-center gap-2">
                       <TrendingUp className="h-4 w-4 text-green-600" /> Top 10 Crescimento
-                      <Badge variant="outline" className="text-[10px]">{periodLabel}</Badge>
+                      <Badge variant="outline" className="text-xs">{periodLabel}</Badge>
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="p-0">
@@ -1051,7 +1051,7 @@ export default function InteligenciaComercialPage() {
                   <CardHeader className="pb-2">
                     <CardTitle className="text-sm flex items-center gap-2">
                       <TrendingDown className="h-4 w-4 text-red-500" /> Top 10 Quedas
-                      <Badge variant="outline" className="text-[10px]">{periodLabel}</Badge>
+                      <Badge variant="outline" className="text-xs">{periodLabel}</Badge>
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="p-0">
@@ -1151,7 +1151,7 @@ export default function InteligenciaComercialPage() {
                               </TableRow>
                               {debugProdutos && (
                                 <TableRow key={`d-${i}`} className="bg-muted/40">
-                                  <TableCell colSpan={7} className="text-[10px] text-muted-foreground font-mono">
+                                  <TableCell colSpan={7} className="text-xs text-muted-foreground font-mono">
                                     Atual: {p.pedidosAtual} pedidos · IDs [{p.idsAtual.join(", ")}]<br />
                                     Anterior: {p.pedidosComp} pedidos · IDs [{p.idsComp.join(", ")}]
                                   </TableCell>
@@ -1199,7 +1199,7 @@ export default function InteligenciaComercialPage() {
                               </TableRow>
                               {debugProdutos && (
                                 <TableRow key={`d-${i}`} className="bg-muted/40">
-                                  <TableCell colSpan={7} className="text-[10px] text-muted-foreground font-mono">
+                                  <TableCell colSpan={7} className="text-xs text-muted-foreground font-mono">
                                     Atual: {p.pedidosAtual} pedidos · IDs [{p.idsAtual.join(", ")}]<br />
                                     Anterior: {p.pedidosComp} pedidos · IDs [{p.idsComp.join(", ")}]
                                   </TableCell>
@@ -1383,7 +1383,7 @@ export default function InteligenciaComercialPage() {
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                           {kpis.map(k => (
                             <div key={k.label} className="rounded-lg border bg-muted/30 p-3">
-                              <p className="text-[11px] text-muted-foreground">{k.label}</p>
+                              <p className="text-xs text-muted-foreground">{k.label}</p>
                               <p className="text-base font-bold mt-1">{k.value}</p>
                             </div>
                           ))}
@@ -1416,7 +1416,7 @@ export default function InteligenciaComercialPage() {
                             <div className="h-1.5 bg-muted rounded-full overflow-hidden mb-1">
                               <div className="h-full bg-primary" style={{ width: `${pct}%` }} />
                             </div>
-                            <div className="flex gap-4 text-[11px] text-muted-foreground">
+                            <div className="flex gap-4 text-xs text-muted-foreground">
                               <span>Pedidos: <b className="text-foreground">{v.pedidos.toLocaleString("pt-BR")}</b></span>
                               <span>Ticket médio: <b className="text-foreground">{R$(ticket)}</b></span>
                               <span>Clientes: <b className="text-foreground">{v.clientes.toLocaleString("pt-BR")}</b></span>
@@ -1469,10 +1469,10 @@ export default function InteligenciaComercialPage() {
                         <CardContent className="p-3 flex items-start gap-3">
                           <AlertTriangle className={`h-4 w-4 flex-shrink-0 mt-0.5 ${a.severidade === "alta" ? "text-red-500" : a.severidade === "media" ? "text-yellow-600" : "text-blue-500"}`} />
                           <div className="flex-1 min-w-0">
-                            <Badge variant="outline" className="text-[10px] mr-2">{a.tipo.replace(/_/g, " ")}</Badge>
+                            <Badge variant="outline" className="text-xs mr-2">{a.tipo.replace(/_/g, " ")}</Badge>
                             <span className="text-sm">{a.mensagem}</span>
                             {a.debug && (
-                              <div className="mt-1 text-[10px] text-muted-foreground font-mono leading-tight">
+                              <div className="mt-1 text-xs text-muted-foreground font-mono leading-tight">
                                 atual {fmt(a.debug.fatAtual ?? 0)} · anterior {fmt(a.debug.fatComp ?? 0)}
                                 {typeof a.debug.pedidosAtual === "number" && <> · pedidos atual {a.debug.pedidosAtual}</>}
                                 {typeof a.debug.pedidosComp === "number" && <> · pedidos anterior {a.debug.pedidosComp}</>}
@@ -1665,7 +1665,7 @@ export default function InteligenciaComercialPage() {
                     <AlertTriangle className="h-4 w-4 text-amber-600" />
                     Receita Recuperável
                   </CardTitle>
-                  <p className="text-[11px] text-muted-foreground mt-1">
+                  <p className="text-xs text-muted-foreground mt-1">
                     Clientes inativos com até 90 dias sem comprar, ordenados pelo potencial mensal de retorno ao faturamento.
                     Receita potencial = média mensal dos últimos 6 meses ativos antes da inatividade.
                     Clientes com mais de 90 dias sem compra são excluídos por baixa probabilidade de recuperação imediata.
@@ -1683,15 +1683,15 @@ export default function InteligenciaComercialPage() {
                         <div className="grid grid-cols-3 gap-2 mb-3 text-center">
                           <div className="p-2 rounded border border-emerald-200 bg-emerald-50">
                             <p className="text-lg font-bold text-emerald-700">{R$(totalRecuperavel)}</p>
-                            <p className="text-[10px] text-muted-foreground">Potencial total /mês</p>
+                            <p className="text-xs text-muted-foreground">Potencial total /mês</p>
                           </div>
                           <div className="p-2 rounded border border-emerald-200 bg-emerald-50">
                             <p className="text-lg font-bold text-emerald-700">{R$(top10Recuperavel)}</p>
-                            <p className="text-[10px] text-muted-foreground">Top 10 /mês</p>
+                            <p className="text-xs text-muted-foreground">Top 10 /mês</p>
                           </div>
                           <div className="p-2 rounded border border-amber-200 bg-amber-50">
                             <p className="text-lg font-bold text-amber-700">{recuperaveis.length}</p>
-                            <p className="text-[10px] text-muted-foreground">Clientes a recuperar (≤90 dias)</p>
+                            <p className="text-xs text-muted-foreground">Clientes a recuperar (≤90 dias)</p>
                           </div>
                         </div>
                         <div className="overflow-auto max-h-[40vh]">
@@ -1757,7 +1757,7 @@ export default function InteligenciaComercialPage() {
                                 <TableCell className="text-xs text-right text-muted-foreground">{R$(c.fatComp)}</TableCell>
                                 <TableCell className={`text-xs text-right ${c.diff >= 0 ? "text-green-600" : "text-red-500"}`}>{R$(c.diff)}</TableCell>
                                 <TableCell className="text-xs text-right"><VariationIndicator value={c.diffPct} /></TableCell>
-                                <TableCell className="text-xs text-right"><Badge variant="outline" className="text-[10px]">{c.classificacao}</Badge></TableCell>
+                                <TableCell className="text-xs text-right"><Badge variant="outline" className="text-xs">{c.classificacao}</Badge></TableCell>
                               </TableRow>
                             ))}
                           </TableBody>

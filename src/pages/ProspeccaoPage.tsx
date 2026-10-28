@@ -380,7 +380,7 @@ export default function ProspeccaoPage() {
           <div className="flex gap-2">
             <Button variant={showFilters ? "secondary" : "outline"} size="sm" onClick={() => setShowFilters(!showFilters)}>
               <Filter className="h-4 w-4 mr-1" /> Filtros
-              {hasActiveFilters && <Badge variant="destructive" className="ml-1 h-4 px-1 text-[10px]">!</Badge>}
+              {hasActiveFilters && <Badge variant="destructive" className="ml-1 h-4 px-1 text-xs">!</Badge>}
             </Button>
             <PodeCriar modulo={'prospeccao'}><Button onClick={() => { setEditingLead(null); setShowFormDialog(true); }}>
               <Plus className="h-4 w-4 mr-1" /> Nova Prospecção
@@ -557,7 +557,7 @@ export default function ProspeccaoPage() {
                                   lead.agendado_por ? `Agendado por ${lead.agendado_por}` : null,
                                 ].filter(Boolean);
                                 return parts.length > 0 ? (
-                                  <p className="text-[10px] text-muted-foreground">
+                                  <p className="text-xs text-muted-foreground">
                                     {parts.join(' • ')}
                                   </p>
                                 ) : null;
@@ -567,7 +567,7 @@ export default function ProspeccaoPage() {
                           {lead.tipo_atendimento && (() => {
                             const opt = TIPO_ATENDIMENTO_OPTIONS.find(o => o.value === lead.tipo_atendimento);
                             return opt ? (
-                              <Badge variant="outline" className="text-[10px] h-4 px-1.5 w-fit">{opt.icon} {opt.label}</Badge>
+                              <Badge variant="outline" className="text-xs h-4 px-1.5 w-fit">{opt.icon} {opt.label}</Badge>
                             ) : null;
                           })()}
                           {(lead.endereco || lead.bairro) && (
@@ -593,7 +593,7 @@ export default function ProspeccaoPage() {
                             const agendada = visitas.find(v => v.lead_id === lead.id && v.status === 'AGENDADA');
                             const horarioStr = agendada?.horario_visita ? ` às ${agendada.horario_visita}` : '';
                             return (
-                              <p className="text-[10px] text-warning font-medium">📅 {format(new Date(lead.proxima_visita_em + 'T12:00:00'), "dd/MM/yyyy")} ({format(new Date(lead.proxima_visita_em + 'T12:00:00'), "EEEE", { locale: ptBR })}){horarioStr}</p>
+                              <p className="text-xs text-warning font-medium">📅 {format(new Date(lead.proxima_visita_em + 'T12:00:00'), "dd/MM/yyyy")} ({format(new Date(lead.proxima_visita_em + 'T12:00:00'), "EEEE", { locale: ptBR })}){horarioStr}</p>
                             );
                           })()}
 
@@ -665,7 +665,7 @@ export default function ProspeccaoPage() {
                   <Badge variant={
                     selectedLead.ultima_visita_status === 'CONCLUIDA_SUCESSO' ? 'default' :
                     selectedLead.ultima_visita_status === 'AGENDADA' ? 'secondary' : 'destructive'
-                  } className="text-[10px]">
+                  } className="text-xs">
                     {selectedLead.ultima_visita_status === 'CONCLUIDA_SUCESSO' ? 'Última: Sucesso ✓' :
                      selectedLead.ultima_visita_status === 'AGENDADA' ? 'Visita Agendada' :
                      selectedLead.ultima_visita_status === 'NAO_CONCLUIDA' ? 'Não Concluída' : 'Sem Sucesso'}
@@ -709,7 +709,7 @@ export default function ProspeccaoPage() {
                   <div className="flex flex-wrap gap-1 mt-1">
                     {selectedLead.produtosInteresse.map(pid => {
                       const prod = CATALOGO_PRODUTOS.find(p => p.id === pid);
-                      return <Badge key={pid} variant="outline" className="text-[10px]">{prod?.nome || pid}</Badge>;
+                      return <Badge key={pid} variant="outline" className="text-xs">{prod?.nome || pid}</Badge>;
                     })}
                   </div>
                 </div>
@@ -734,7 +734,7 @@ export default function ProspeccaoPage() {
                       )}>
                         <div className="flex justify-between">
                           <span className="font-medium">{format(new Date(v.data_visita + 'T12:00:00'), "dd/MM/yyyy")}</span>
-                          <Badge variant="outline" className="text-[10px] h-4">
+                          <Badge variant="outline" className="text-xs h-4">
                             {v.status === 'AGENDADA' ? '📅 Agendada' :
                              v.status === 'CONCLUIDA_SUCESSO' ? '✅ Sucesso' :
                              v.status === 'NAO_CONCLUIDA' ? '⏸ Não concluída' :

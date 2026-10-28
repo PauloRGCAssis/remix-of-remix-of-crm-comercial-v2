@@ -60,7 +60,8 @@
     --sidebar-background: 0 94% 18%;
     --sidebar-foreground: 0 0% 100%;
     --sidebar-primary: 50 81% 73%;
-    --sidebar-primary-foreground: 0 0% 100%;
+    /* Texto sobre o amarelo do item ativo: escuro para manter contraste. */
+    --sidebar-primary-foreground: 0 0% 5%;
     --sidebar-accent: 0 72% 24%;
     --sidebar-accent-foreground: 0 0% 100%;
     --sidebar-border: 0 60% 26%;
@@ -118,7 +119,8 @@
     --sidebar-background: 0 90% 12%;
     --sidebar-foreground: 0 0% 100%;
     --sidebar-primary: 50 81% 73%;
-    --sidebar-primary-foreground: 0 0% 100%;
+    /* Texto sobre o amarelo do item ativo: escuro para manter contraste. */
+    --sidebar-primary-foreground: 0 0% 5%;
     --sidebar-accent: 0 70% 18%;
     --sidebar-accent-foreground: 0 0% 100%;
     --sidebar-border: 0 60% 18%;
@@ -215,6 +217,11 @@
 
   .text-gradient-brand {
     color: hsl(var(--brand-wine));
+  }
+
+  /* No tema escuro o vinho some sobre o fundo; o laranja mantém a marca legível. */
+  .dark .text-gradient-brand {
+    color: hsl(var(--brand-orange));
   }
 
   .shadow-brand {

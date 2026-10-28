@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Loader2, KeyRound } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 /**
  * Primeiro acesso: o usuário cria a própria senha.
@@ -104,9 +104,7 @@ export default function PrimeiroAcessoPage() {
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <div className="mx-auto w-12 h-12 rounded-lg gradient-brand flex items-center justify-center shadow-brand mb-2">
-            <KeyRound className="h-5 w-5 text-primary-foreground" />
-          </div>
+          <img src="/logo-ti-delso.png" alt="Ti Delso" className="mx-auto h-28 w-auto max-w-full object-contain mb-2" />
           <CardTitle className="font-heading">Primeiro acesso</CardTitle>
           <CardDescription>
             Informe o e-mail cadastrado pelo administrador e crie sua senha pessoal.
