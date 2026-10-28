@@ -1,90 +1,103 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Playfair+Display:wght@700;800;900&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    --background: 40 33% 98%;
-    --foreground: 25 30% 12%;
+    /*
+     * Paleta institucional Ti Delso (hex → HSL):
+     * amarelo #F2DF80, laranja #F28705, branco #FFFFFF, vinho #590303, preto #0D0D0D.
+     */
+    --brand-yellow: 50 81% 73%;
+    --brand-orange: 33 96% 48%;
+    --brand-white: 0 0% 100%;
+    --brand-wine: 0 94% 18%;
+    --brand-black: 0 0% 5%;
 
-    --card: 40 30% 99%;
-    --card-foreground: 25 30% 12%;
+    --background: 0 0% 100%;
+    --foreground: 0 0% 5%;
 
-    --popover: 40 30% 99%;
-    --popover-foreground: 25 30% 12%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 5%;
 
-    --primary: 32 90% 50%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 5%;
+
+    /* Ações principais em vinho. */
+    --primary: 0 94% 18%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 35 30% 93%;
-    --secondary-foreground: 25 30% 18%;
+    --secondary: 0 0% 96%;
+    --secondary-foreground: 0 0% 5%;
 
-    --muted: 35 20% 94%;
-    --muted-foreground: 25 10% 46%;
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 38%;
 
-    --accent: 25 60% 45%;
-    --accent-foreground: 0 0% 100%;
+    /* Hover e itens selecionados: amarelo suave com texto preto. */
+    --accent: 50 81% 90%;
+    --accent-foreground: 0 0% 5%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --success: 142 60% 40%;
+    --success: 142 60% 36%;
     --success-foreground: 0 0% 100%;
 
     --warning: 38 92% 50%;
-    --warning-foreground: 25 30% 12%;
+    --warning-foreground: 0 0% 5%;
 
-    --info: 210 70% 50%;
+    --info: 210 70% 46%;
     --info-foreground: 0 0% 100%;
 
-    --border: 35 20% 88%;
-    --input: 35 20% 88%;
-    --ring: 32 90% 50%;
+    --border: 0 0% 89%;
+    --input: 0 0% 85%;
+    /* Foco em laranja: destaque visível sobre o fundo branco. */
+    --ring: 33 96% 48%;
 
-    --radius: 0.75rem;
+    --radius: 0.5rem;
 
-    --sidebar-background: 25 28% 14%;
-    --sidebar-foreground: 35 20% 85%;
-    --sidebar-primary: 32 90% 55%;
+    /* Menu lateral vinho com texto branco; item ativo em amarelo. */
+    --sidebar-background: 0 94% 18%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 50 81% 73%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 25 25% 20%;
-    --sidebar-accent-foreground: 35 20% 90%;
-    --sidebar-border: 25 20% 22%;
-    --sidebar-ring: 32 90% 55%;
+    --sidebar-accent: 0 72% 24%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 0 60% 26%;
+    --sidebar-ring: 33 96% 48%;
 
-    --chart-1: 32 90% 50%;
-    --chart-2: 142 60% 40%;
-    --chart-3: 210 70% 50%;
-    --chart-4: 0 72% 51%;
-    --chart-5: 280 60% 50%;
+    --chart-1: 33 96% 48%;
+    --chart-2: 0 94% 18%;
+    --chart-3: 142 60% 36%;
+    --chart-4: 210 70% 46%;
+    --chart-5: 50 81% 60%;
 
-    --font-heading: 'Playfair Display', serif;
-    --font-body: 'DM Sans', sans-serif;
+    --font-heading: Verdana, Geneva, sans-serif;
+    --font-body: Verdana, Geneva, sans-serif;
   }
 
   .dark {
-    --background: 25 28% 8%;
-    --foreground: 35 20% 92%;
+    --background: 0 0% 7%;
+    --foreground: 0 0% 95%;
 
-    --card: 25 25% 12%;
-    --card-foreground: 35 20% 92%;
+    --card: 0 0% 10%;
+    --card-foreground: 0 0% 95%;
 
-    --popover: 25 25% 12%;
-    --popover-foreground: 35 20% 92%;
+    --popover: 0 0% 10%;
+    --popover-foreground: 0 0% 95%;
 
-    --primary: 32 90% 55%;
-    --primary-foreground: 0 0% 100%;
+    /* No escuro o vinho perde leitura como texto; o laranja assume as ações. */
+    --primary: 33 96% 52%;
+    --primary-foreground: 0 0% 5%;
 
-    --secondary: 25 20% 18%;
-    --secondary-foreground: 35 20% 90%;
+    --secondary: 0 0% 16%;
+    --secondary-foreground: 0 0% 92%;
 
-    --muted: 25 15% 18%;
-    --muted-foreground: 35 10% 55%;
+    --muted: 0 0% 16%;
+    --muted-foreground: 0 0% 64%;
 
-    --accent: 32 70% 50%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 50 30% 20%;
+    --accent-foreground: 50 81% 85%;
 
     --destructive: 0 62% 45%;
     --destructive-foreground: 0 0% 100%;
@@ -93,23 +106,23 @@
     --success-foreground: 0 0% 100%;
 
     --warning: 38 85% 55%;
-    --warning-foreground: 25 30% 12%;
+    --warning-foreground: 0 0% 5%;
 
     --info: 210 65% 55%;
     --info-foreground: 0 0% 100%;
 
-    --border: 25 15% 22%;
-    --input: 25 15% 22%;
-    --ring: 32 90% 55%;
+    --border: 0 0% 20%;
+    --input: 0 0% 22%;
+    --ring: 33 96% 52%;
 
-    --sidebar-background: 25 30% 8%;
-    --sidebar-foreground: 35 20% 85%;
-    --sidebar-primary: 32 90% 55%;
+    --sidebar-background: 0 90% 12%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 50 81% 73%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 25 25% 15%;
-    --sidebar-accent-foreground: 35 20% 90%;
-    --sidebar-border: 25 20% 15%;
-    --sidebar-ring: 32 90% 55%;
+    --sidebar-accent: 0 70% 18%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 0 60% 18%;
+    --sidebar-ring: 33 96% 52%;
   }
 }
 
@@ -150,14 +163,33 @@
     left: 0;
     z-index: 10;
     background-color: hsl(var(--background));
-    box-shadow: inset -1px 0 0 0 hsl(var(--border)), 2px 0 4px -3px hsl(25 30% 12% / 0.35);
+    box-shadow: inset -1px 0 0 0 hsl(var(--border)), 2px 0 4px -3px hsl(var(--brand-black) / 0.25);
   }
 
   .sheet-table > table > thead > tr > *:first-child {
     left: 0;
     z-index: 30;
     box-shadow: inset 0 -1px 0 0 hsl(var(--border)), inset -1px 0 0 0 hsl(var(--border)),
-      2px 0 4px -3px hsl(25 30% 12% / 0.35);
+      2px 0 4px -3px hsl(var(--brand-black) / 0.25);
+  }
+
+  /* Barra de rolagem do menu lateral: trilho transparente e barra branca. */
+  [data-sidebar="content"] {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--sidebar-foreground) / 0.6) transparent;
+  }
+
+  [data-sidebar="content"]::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  [data-sidebar="content"]::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  [data-sidebar="content"]::-webkit-scrollbar-thumb {
+    background-color: hsl(var(--sidebar-foreground) / 0.6);
+    border-radius: 9999px;
   }
 
   /* Opt-out pontual para tabelas que já tratam o congelamento manualmente. */
@@ -172,31 +204,29 @@
 
 @layer utilities {
 
+  /* Nomes antigos mantidos para não quebrar telas; agora em cor sólida institucional. */
   .gradient-brand {
-    background: linear-gradient(135deg, hsl(32 90% 50%), hsl(25 60% 45%));
+    background: hsl(var(--brand-wine));
   }
-  
+
   .gradient-card {
-    background: linear-gradient(145deg, hsl(40 30% 99%), hsl(35 25% 96%));
+    background: hsl(var(--card));
   }
 
   .text-gradient-brand {
-    background: linear-gradient(135deg, hsl(32 90% 50%), hsl(25 60% 45%));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    color: hsl(var(--brand-wine));
   }
 
   .shadow-brand {
-    box-shadow: 0 4px 20px -4px hsl(32 90% 50% / 0.25);
+    box-shadow: 0 2px 8px -2px hsl(var(--brand-wine) / 0.3);
   }
 
   .shadow-card {
-    box-shadow: 0 1px 3px 0 hsl(25 30% 12% / 0.06), 0 1px 2px -1px hsl(25 30% 12% / 0.06);
+    box-shadow: 0 1px 2px 0 hsl(var(--brand-black) / 0.05), 0 1px 3px -1px hsl(var(--brand-black) / 0.06);
   }
 
   .shadow-card-hover {
-    box-shadow: 0 10px 25px -5px hsl(25 30% 12% / 0.1), 0 8px 10px -6px hsl(25 30% 12% / 0.08);
+    box-shadow: 0 6px 16px -6px hsl(var(--brand-black) / 0.12), 0 2px 6px -3px hsl(var(--brand-black) / 0.08);
   }
 
   /*

@@ -14,10 +14,18 @@ export default {
     },
     extend: {
       fontFamily: {
-        heading: ['Playfair Display', 'serif'],
-        body: ['DM Sans', 'sans-serif'],
+        sans: ['Verdana', 'Geneva', 'sans-serif'],
+        heading: ['Verdana', 'Geneva', 'sans-serif'],
+        body: ['Verdana', 'Geneva', 'sans-serif'],
       },
       colors: {
+        brand: {
+          yellow: "hsl(var(--brand-yellow))",
+          orange: "hsl(var(--brand-orange))",
+          white: "hsl(var(--brand-white))",
+          wine: "hsl(var(--brand-wine))",
+          black: "hsl(var(--brand-black))",
+        },
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",

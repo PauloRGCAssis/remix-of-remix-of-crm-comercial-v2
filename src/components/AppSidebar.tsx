@@ -81,17 +81,19 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon">
-      <SidebarHeader className="p-4">
+      <SidebarHeader className={collapsed ? "p-2" : "p-4"}>
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg gradient-brand flex items-center justify-center shadow-brand flex-shrink-0">
-            <span className="text-lg font-bold text-primary-foreground font-heading">T</span>
-          </div>
+          <img
+            src="/logo-ti-delso.png"
+            alt="Ti Delso"
+            className={`${collapsed ? "w-8 h-8" : "w-14 h-14"} object-contain flex-shrink-0`}
+          />
           {!collapsed && (
             <div className="min-w-0">
               <h2 className="text-sm font-bold text-sidebar-primary-foreground font-heading truncate">
                 Ti Delso
               </h2>
-              <p className="text-xs text-sidebar-foreground/60 truncate">
+              <p className="text-xs text-sidebar-foreground/75 truncate">
                 {isGestor ? "Gestor" : vendedor || nome || "Vendedor"}
               </p>
             </div>
@@ -101,7 +103,7 @@ export function AppSidebar() {
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel className="text-sidebar-foreground/40 text-xs uppercase tracking-wider">
+          <SidebarGroupLabel className="text-sidebar-foreground/60 text-xs uppercase tracking-wider">
             Menu Principal
           </SidebarGroupLabel>
           <SidebarGroupContent>
@@ -113,8 +115,8 @@ export function AppSidebar() {
                     <NavLink
                       to={item.url}
                       end={item.url === "/"}
-                      className="hover:bg-sidebar-accent/50 transition-colors"
-                      activeClassName="bg-sidebar-accent text-sidebar-primary font-medium"
+                      className="text-sidebar-foreground/85 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground transition-colors"
+                      activeClassName="bg-sidebar-accent !text-sidebar-primary font-medium shadow-[inset_3px_0_0_0_hsl(var(--brand-orange))]"
                     >
                       <item.icon className="h-4 w-4 flex-shrink-0" />
                       {!collapsed && <span>{item.title}</span>}
@@ -130,7 +132,7 @@ export function AppSidebar() {
       <SidebarFooter className="p-4 space-y-2">
         <LogoutButton collapsed={collapsed} />
         {!collapsed && (
-          <p className="text-[10px] text-sidebar-foreground/30 text-center">
+          <p className="text-[10px] text-sidebar-foreground/50 text-center">
             Pão de Queijo Ti Delso © 2026
           </p>
         )}
@@ -144,13 +146,13 @@ function LogoutButton({ collapsed }: { collapsed: boolean }) {
   return (
     <div className="flex flex-col gap-1">
       {!collapsed && user?.email && (
-        <p className="text-[10px] text-sidebar-foreground/50 truncate px-1">{user.email}</p>
+        <p className="text-[10px] text-sidebar-foreground/70 truncate px-1">{user.email}</p>
       )}
       <Button
         variant="ghost"
         size="sm"
         onClick={() => signOut()}
-        className="w-full justify-start text-sidebar-foreground/70 hover:text-sidebar-foreground"
+        className="w-full justify-start text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground"
         title="Sair"
       >
         <LogOut className="h-4 w-4 flex-shrink-0" />

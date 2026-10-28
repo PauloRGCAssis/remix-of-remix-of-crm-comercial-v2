@@ -75,11 +75,9 @@ export default function AuthPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-md">
+      <Card className="w-full max-w-md border-t-4 border-t-brand-orange shadow-card">
         <CardHeader className="text-center">
-          <div className="mx-auto w-14 h-14 rounded-lg gradient-brand flex items-center justify-center shadow-brand mb-2">
-            <span className="text-2xl font-bold text-primary-foreground font-heading">T</span>
-          </div>
+          <img src="/logo-ti-delso.png" alt="Ti Delso" className="mx-auto h-28 w-auto max-w-full object-contain mb-2" />
           <CardTitle className="font-heading">Ti Delso</CardTitle>
           <CardDescription>Entre com seu e-mail e senha para acessar o sistema</CardDescription>
         </CardHeader>
@@ -116,11 +114,11 @@ export default function AuthPage() {
             </Button>
           </form>
 
-          <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 space-y-2">
+          <div className="rounded-lg border border-brand-yellow bg-accent p-3 space-y-2">
             <p className="text-sm text-center text-foreground">
               Primeiro acesso? Crie sua senha para entrar no sistema.
             </p>
-            <Button asChild type="button" className="w-full">
+            <Button asChild type="button" className="w-full bg-brand-orange text-brand-black hover:bg-brand-orange/90">
               <Link to="/primeiro-acesso">PRIMEIRO ACESSO / CRIAR MINHA SENHA</Link>
             </Button>
           </div>

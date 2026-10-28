@@ -12,14 +12,14 @@ export function AppLayout({ children }: AppLayoutProps) {
       <div className="min-h-screen flex w-full">
         <AppSidebar />
         <div className="flex-1 flex flex-col min-w-0">
-          <header className="h-14 flex items-center border-b border-border bg-card px-4 sticky top-0 z-10">
+          <header className="h-14 flex items-center border-b-2 border-brand-orange bg-card px-4 sticky top-0 z-10">
             <SidebarTrigger className="mr-4" />
             <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-muted-foreground font-body">
+              <span className="text-sm font-semibold text-foreground font-body">
                 Pão de Queijo Ti Delso
               </span>
-              <span className="text-muted-foreground/30">|</span>
-              <span className="text-sm text-muted-foreground/60">CRM Comercial</span>
+              <span className="hidden sm:inline text-border">|</span>
+              <span className="hidden sm:inline text-sm text-muted-foreground">CRM Comercial</span>
             </div>
             <SincronizacaoIndicador />
           </header>
